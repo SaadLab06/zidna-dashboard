@@ -6,10 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Instagram, Facebook, Bot, Bell, Webhook, AlertTriangle } from "lucide-react";
+import { Bot, Bell, Webhook, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { validateWebhookForStorage } from "@/lib/webhookValidation";
-import { validateToken } from "@/lib/tokenEncryption";
 import { toast } from "sonner";
 
 const Settings = () => {
@@ -40,10 +39,6 @@ const Settings = () => {
     toast.error("Settings backend not yet implemented. Webhook validation passed.");
   };
 
-  const handleSaveTokens = () => {
-    toast.error("Settings backend not yet implemented. Tokens must be stored in Supabase Vault for security.");
-  };
-
   return (
     <div className="space-y-6 animate-in">
       <div>
@@ -61,59 +56,13 @@ const Settings = () => {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="accounts" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="accounts">Accounts</TabsTrigger>
+      <Tabs defaultValue="ai" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="ai">AI Config</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="accounts" className="space-y-6">
-          <Card className="p-6 border-0 shadow-lg">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-12 w-12 rounded-lg bg-[#E1306C]/10 flex items-center justify-center">
-                <Instagram className="h-6 w-6 text-[#E1306C]" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">Instagram</h3>
-                <p className="text-sm text-muted-foreground">Connect your Instagram account</p>
-              </div>
-              <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                Connected
-              </Badge>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <Label>Page Access Token</Label>
-                <Input type="password" placeholder="••••••••••••••••" className="mt-2" disabled />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Token storage not yet implemented (requires Supabase Vault)
-                </p>
-              </div>
-              <Button variant="outline" className="w-full" disabled>Refresh Connection</Button>
-            </div>
-          </Card>
-
-          <Card className="p-6 border-0 shadow-lg">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-12 w-12 rounded-lg bg-[#1877F2]/10 flex items-center justify-center">
-                <Facebook className="h-6 w-6 text-[#1877F2]" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">Facebook</h3>
-                <p className="text-sm text-muted-foreground">Connect your Facebook page</p>
-              </div>
-              <Badge variant="outline">Not Connected</Badge>
-            </div>
-            <Button className="w-full gradient-primary" disabled>Connect Facebook</Button>
-          </Card>
-
-          <div className="flex justify-end">
-            <Button onClick={handleSaveTokens} disabled>Save Tokens</Button>
-          </div>
-        </TabsContent>
 
         <TabsContent value="ai" className="space-y-6">
           <Card className="p-6 border-0 shadow-lg">
