@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Search, MessageCircle, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { validateSearch } from "@/lib/validation";
+import { toast } from "sonner";
 
 const Messages = () => {
   const [threads, setThreads] = useState<any[]>([]);
@@ -53,7 +55,12 @@ const Messages = () => {
       .order('last_message_time', { ascending: false });
 
     if (searchTerm) {
-      query = query.ilike('user_name', `%${searchTerm}%`);
+      const validation = validateSearch(searchTerm);
+      if (!validation.success) {
+        toast.error(validation.error);
+        return;
+      }
+      query = query.ilike('user_name', `%${validation.data}%`);
     }
 
     const { data, error } = await query;
@@ -99,6 +106,7 @@ const Messages = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                maxLength={200}
               />
             </div>
           </div>
@@ -213,6 +221,7 @@ const Messages = () => {
                     placeholder="Type a message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
+                    maxLength={1000}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && newMessage.trim()) {
                         // Handle send message

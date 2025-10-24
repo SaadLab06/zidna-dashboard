@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Upload, Search, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Input } from "@/components/ui/input";
+import { validateSearch } from "@/lib/validation";
+import { toast } from "sonner";
 
 const Documents = () => {
   const [documents, setDocuments] = useState<any[]>([]);
@@ -24,7 +26,13 @@ const Documents = () => {
       .order('uploaded_at', { ascending: false });
 
     if (searchTerm) {
-      query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      const validation = validateSearch(searchTerm);
+      if (!validation.success) {
+        toast.error(validation.error);
+        setLoading(false);
+        return;
+      }
+      query = query.or(`name.ilike.%${validation.data}%,description.ilike.%${validation.data}%`);
     }
 
     const { data, error } = await query;

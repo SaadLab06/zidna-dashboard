@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { validateSearch } from "@/lib/validation";
+import { toast } from "sonner";
 
 const Comments = () => {
   const [comments, setComments] = useState<any[]>([]);
@@ -49,7 +51,13 @@ const Comments = () => {
     }
 
     if (searchTerm) {
-      query = query.or(`user_name.ilike.%${searchTerm}%,message.ilike.%${searchTerm}%`);
+      const validation = validateSearch(searchTerm);
+      if (!validation.success) {
+        toast.error(validation.error);
+        setLoading(false);
+        return;
+      }
+      query = query.or(`user_name.ilike.%${validation.data}%,message.ilike.%${validation.data}%`);
     }
 
     const { data, error } = await query;
@@ -99,6 +107,7 @@ const Comments = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
+              maxLength={200}
             />
           </div>
           <Select value={platformFilter} onValueChange={setPlatformFilter}>
