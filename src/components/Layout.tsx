@@ -4,37 +4,34 @@ import { LayoutDashboard, MessageSquare, FileText, Settings, MessageCircle, LogO
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-
 interface LayoutProps {
   children: ReactNode;
 }
-
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({
+  children
+}: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState<string>("");
-
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email || "");
       }
     };
     getUser();
   }, []);
-
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const {
+      error
+    } = await supabase.auth.signOut();
     if (error) {
       toast.error("Failed to log out");
     } else {
@@ -42,47 +39,44 @@ const Layout = ({ children }: LayoutProps) => {
       navigate("/auth");
     }
   };
-
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-    { icon: MessageSquare, label: "Comments", path: "/comments" },
-    { icon: MessageCircle, label: "Messages", path: "/messages" },
-    { icon: FileText, label: "AI Documents", path: "/documents" },
-    { icon: Settings, label: "Settings", path: "/settings" },
-  ];
-
-  return (
-    <div className="flex min-h-screen bg-background">
+  const navItems = [{
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    path: "/"
+  }, {
+    icon: MessageSquare,
+    label: "Comments",
+    path: "/comments"
+  }, {
+    icon: MessageCircle,
+    label: "Messages",
+    path: "/messages"
+  }, {
+    icon: FileText,
+    label: "AI Documents",
+    path: "/documents"
+  }, {
+    icon: Settings,
+    label: "Settings",
+    path: "/settings"
+  }];
+  return <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
         <div className="p-6">
-          <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
-            SocialAI Hub
-          </h1>
+          <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-slate-50">Zidna Social Hub</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your social presence</p>
         </div>
         
         <nav className="px-3 space-y-1 flex-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-primary font-medium shadow-glow"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                )}
-              >
+          {navItems.map(item => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          return <Link key={item.path} to={item.path} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200", isActive ? "bg-sidebar-accent text-sidebar-primary font-medium shadow-glow" : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}>
                 <Icon className="h-5 w-5" />
                 <span>{item.label}</span>
-              </Link>
-            );
-          })}
+              </Link>;
+        })}
         </nav>
       </aside>
 
@@ -113,8 +107,6 @@ const Layout = ({ children }: LayoutProps) => {
           {children}
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Layout;
