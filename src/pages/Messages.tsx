@@ -302,70 +302,72 @@ const Messages = () => {
               </div>
 
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4 overflow-y-auto">
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div key={message.id}>
-                      <div
-                        className={`flex ${message.direction === 'out' ? 'justify-end' : 'justify-start'}`}
-                      >
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full p-4">
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <div key={message.id}>
                         <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
-                            message.direction === 'out'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          }`}
+                          className={`flex ${message.direction === 'out' ? 'justify-end' : 'justify-start'}`}
                         >
-                          <p className="text-sm break-words">{message.message}</p>
-                          <p className="text-xs opacity-70 mt-1">
-                            {message.created_at && formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Show AI Auto-Reply */}
-                      {message.direction === 'in' && message.ai_dm_reply && (
-                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 rounded-r-lg">
-                          <div className="flex items-start gap-2">
-                            <Bot className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">
-                                AI {selectedThread.ai_control ? 'Auto-Reply (will be sent automatically)' : 'Reply'}
-                              </p>
-                              <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
-                                {message.ai_dm_reply}
-                              </p>
-                              {selectedThread.ai_control && (
-                                <div className="flex gap-2 mt-2">
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={async () => {
-                                      const { error } = await supabase
-                                        .from('threads')
-                                        .update({ ai_control: false })
-                                        .eq('id', selectedThread.id);
-                                      
-                                      if (!error) {
-                                        setSelectedThread({ ...selectedThread, ai_control: false });
-                                        toast.success("Taken control from AI");
-                                      }
-                                    }}
-                                    className="text-xs"
-                                  >
-                                    Take Control
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
+                          <div
+                            className={`max-w-[70%] rounded-lg p-3 ${
+                              message.direction === 'out'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <p className="text-sm break-words">{message.message}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {message.created_at && formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                            </p>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
+                        
+                        {/* Show AI Auto-Reply */}
+                        {message.direction === 'in' && message.ai_dm_reply && (
+                          <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 rounded-r-lg">
+                            <div className="flex items-start gap-2">
+                              <Bot className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">
+                                  AI {selectedThread.ai_control ? 'Auto-Reply (will be sent automatically)' : 'Reply'}
+                                </p>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
+                                  {message.ai_dm_reply}
+                                </p>
+                                {selectedThread.ai_control && (
+                                  <div className="flex gap-2 mt-2">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={async () => {
+                                        const { error } = await supabase
+                                          .from('threads')
+                                          .update({ ai_control: false })
+                                          .eq('id', selectedThread.id);
+                                        
+                                        if (!error) {
+                                          setSelectedThread({ ...selectedThread, ai_control: false });
+                                          toast.success("Taken control from AI");
+                                        }
+                                      }}
+                                      className="text-xs"
+                                    >
+                                      Take Control
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
+              </div>
 
               {/* Input */}
               <div className="p-4 border-t border-border">
