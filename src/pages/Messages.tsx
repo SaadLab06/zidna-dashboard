@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,15 @@ const Messages = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [newMessage, setNewMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     fetchThreads();
@@ -293,7 +302,7 @@ const Messages = () => {
               </div>
 
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
+              <ScrollArea className="flex-1 p-4 overflow-y-auto">
                 <div className="space-y-4">
                   {messages.map((message) => (
                     <div key={message.id}>
@@ -307,7 +316,7 @@ const Messages = () => {
                               : 'bg-muted'
                           }`}
                         >
-                          <p className="text-sm">{message.message}</p>
+                          <p className="text-sm break-words">{message.message}</p>
                           <p className="text-xs opacity-70 mt-1">
                             {message.created_at && formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
                           </p>
@@ -323,7 +332,7 @@ const Messages = () => {
                               <p className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">
                                 AI {selectedThread.ai_control ? 'Auto-Reply (will be sent automatically)' : 'Reply'}
                               </p>
-                              <p className="text-sm text-gray-700 dark:text-gray-300">
+                              <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
                                 {message.ai_dm_reply}
                               </p>
                               {selectedThread.ai_control && (
@@ -354,6 +363,7 @@ const Messages = () => {
                       )}
                     </div>
                   ))}
+                  <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 
