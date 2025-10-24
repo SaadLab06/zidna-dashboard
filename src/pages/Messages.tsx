@@ -131,7 +131,7 @@ const Messages = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
         {/* Conversations List */}
-        <Card className="border-0 shadow-lg overflow-hidden">
+        <Card className="border-0 shadow-lg overflow-hidden h-full">
           <div className="p-4 border-b border-border">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -200,7 +200,7 @@ const Messages = () => {
         </Card>
 
         {/* Chat Window */}
-        <Card className="lg:col-span-2 border-0 shadow-lg flex flex-col">
+        <Card className="lg:col-span-2 border-0 shadow-lg flex flex-col h-full">
           {selectedThread ? (
             <>
               {/* Chat Header */}
