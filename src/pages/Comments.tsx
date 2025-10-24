@@ -335,6 +335,36 @@ const Comments = () => {
         </div>
       </Card>
 
+      {/* Bulk Actions Bar - Shows below search when items selected */}
+      {selectedComments.length > 0 && (
+        <Card className="p-4 border-0 shadow-lg bg-blue-600 text-white">
+          <div className="flex items-center justify-between">
+            <span className="font-medium">{selectedComments.length} item(s) selected</span>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleBulkSendReplies}
+                className="bg-white text-blue-600 hover:bg-gray-100"
+              >
+                Send Replies
+              </Button>
+              <Button
+                onClick={handleBulkDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete Selected
+              </Button>
+              <Button
+                onClick={() => setSelectedComments([])}
+                variant="ghost"
+                className="text-white hover:bg-blue-700"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Comments Table */}
       <Card className="border-0 shadow-lg overflow-hidden">
         {loading ? (
@@ -443,35 +473,6 @@ const Comments = () => {
         )}
       </Card>
 
-      {/* Bulk Actions Bar */}
-      {selectedComments.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-blue-600 text-white p-4 shadow-lg z-50">
-          <div className="flex items-center justify-between max-w-7xl mx-auto">
-            <span className="font-medium">{selectedComments.length} item(s) selected</span>
-            <div className="flex gap-3">
-              <Button
-                onClick={handleBulkSendReplies}
-                className="bg-white text-blue-600 hover:bg-gray-100"
-              >
-                Send Replies
-              </Button>
-              <Button
-                onClick={handleBulkDelete}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Delete Selected
-              </Button>
-              <Button
-                onClick={() => setSelectedComments([])}
-                variant="ghost"
-                className="text-white hover:bg-blue-700"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

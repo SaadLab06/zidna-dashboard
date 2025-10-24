@@ -151,7 +151,11 @@ const Messages = () => {
                             )}
                           </div>
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">{thread.last_message}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {thread.last_message && thread.last_message.length > 50
+                            ? `${thread.last_message.slice(0, 50)}...`
+                            : thread.last_message}
+                        </p>
                         <Badge variant="outline" className="text-xs mt-1">
                           {thread.platform}
                         </Badge>
