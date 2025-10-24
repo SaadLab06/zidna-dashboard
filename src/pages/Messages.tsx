@@ -205,11 +205,15 @@ const Messages = () => {
                           toast.success(checked ? "AI control enabled" : "AI control disabled");
                           
                           // Trigger webhook
-                          const { data: webhooks } = await supabase
+                          const { data: webhooks, error: webhookError } = await supabase
                             .from('webhooks_config')
                             .select('endpoint')
                             .eq('name', 'ai_control_change')
-                            .single();
+                            .maybeSingle();
+                          
+                          if (webhookError) {
+                            console.error('Webhook fetch error:', webhookError);
+                          }
                           
                           if (webhooks?.endpoint) {
                             try {
@@ -318,11 +322,17 @@ const Messages = () => {
                         setNewMessage("");
                         
                         // Get webhook URL for message sending
-                        const { data: webhooks } = await supabase
+                        const { data: webhooks, error: webhookError } = await supabase
                           .from('webhooks_config')
                           .select('endpoint')
                           .eq('name', 'send_message')
-                          .single();
+                          .maybeSingle();
+                        
+                        if (webhookError) {
+                          console.error('Webhook fetch error:', webhookError);
+                          toast.error("Error fetching webhook configuration");
+                          return;
+                        }
                         
                         if (!webhooks?.endpoint) {
                           toast.error("No webhook configured for sending messages");
@@ -379,11 +389,17 @@ const Messages = () => {
                       setNewMessage("");
                       
                       // Get webhook URL for message sending
-                      const { data: webhooks } = await supabase
+                      const { data: webhooks, error: webhookError } = await supabase
                         .from('webhooks_config')
                         .select('endpoint')
                         .eq('name', 'send_message')
-                        .single();
+                        .maybeSingle();
+                      
+                      if (webhookError) {
+                        console.error('Webhook fetch error:', webhookError);
+                        toast.error("Error fetching webhook configuration");
+                        return;
+                      }
                       
                       if (!webhooks?.endpoint) {
                         toast.error("No webhook configured for sending messages");
