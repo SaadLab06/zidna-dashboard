@@ -218,13 +218,9 @@ const Messages = () => {
                                 headers: {
                                   'Content-Type': 'application/json',
                                 },
-                                mode: 'no-cors',
                                 body: JSON.stringify({
                                   thread_id: selectedThread.thread_id,
-                                  user_name: selectedThread.user_name,
-                                  platform: selectedThread.platform,
-                                  ai_control: checked,
-                                  timestamp: new Date().toISOString(),
+                                  ai_control: checked
                                 }),
                               });
                             } catch (error) {
@@ -341,13 +337,9 @@ const Messages = () => {
                               'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                              thread_id: selectedThread.thread_id,
-                              platform: selectedThread.platform,
-                              message: messageText,
-                              direction: 'out',
-                              sender_name: 'Admin',
-                              user_name: selectedThread.user_name,
-                              timestamp: new Date().toISOString(),
+                              recipient_id: selectedThread.thread_id,
+                              sender_id: 'admin',
+                              ai_dm_reply: messageText
                             }),
                           });
                           
@@ -368,12 +360,12 @@ const Messages = () => {
                             }
                           } else {
                             toast.error("Webhook failed - message not saved");
-                            setNewMessage(messageText); // Restore the message
+                            setNewMessage(messageText);
                           }
                         } catch (error) {
                           console.error('Error:', error);
                           toast.error("Failed to send message - webhook error");
-                          setNewMessage(messageText); // Restore the message
+                          setNewMessage(messageText);
                         }
                       }
                     }}
@@ -406,13 +398,9 @@ const Messages = () => {
                             'Content-Type': 'application/json',
                           },
                           body: JSON.stringify({
-                            thread_id: selectedThread.thread_id,
-                            platform: selectedThread.platform,
-                            message: messageText,
-                            direction: 'out',
-                            sender_name: 'Admin',
-                            user_name: selectedThread.user_name,
-                            timestamp: new Date().toISOString(),
+                            recipient_id: selectedThread.thread_id,
+                            sender_id: 'admin',
+                            ai_dm_reply: messageText
                           }),
                         });
                         
@@ -433,12 +421,12 @@ const Messages = () => {
                           }
                         } else {
                           toast.error("Webhook failed - message not saved");
-                          setNewMessage(messageText); // Restore the message
+                          setNewMessage(messageText);
                         }
                       } catch (error) {
                         console.error('Error:', error);
                         toast.error("Failed to send message - webhook error");
-                        setNewMessage(messageText); // Restore the message
+                        setNewMessage(messageText);
                       }
                     }}
                   >
