@@ -150,16 +150,72 @@ const Settings = () => {
               <div>
                 <Label>Comment Reply Webhook</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/..." 
+                  placeholder="https://your-n8n-instance.com/webhook/comments_send_reply" 
                   className="mt-2"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Endpoint for sending comment replies to platforms
+                </p>
               </div>
               <div>
                 <Label>DM Reply Webhook</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/..." 
+                  placeholder="https://your-n8n-instance.com/webhook/dm_reply" 
                   className="mt-2"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Endpoint for sending direct message replies
+                </p>
+              </div>
+              <div>
+                <Label>Delete Comment Webhook</Label>
+                <Input 
+                  placeholder="https://your-n8n-instance.com/webhook/delete_comment" 
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Endpoint for deleting comments from platforms
+                </p>
+              </div>
+              <div>
+                <Label>Upload File Webhook (AI Documents)</Label>
+                <Input 
+                  placeholder="https://your-n8n-instance.com/webhook/upload_file" 
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Endpoint for uploading and embedding AI documents
+                </p>
+              </div>
+              <div>
+                <Label>Delete Document Webhook (AI Documents)</Label>
+                <Input 
+                  placeholder="https://your-n8n-instance.com/webhook/delete_file" 
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Endpoint for deleting AI documents
+                </p>
+              </div>
+              <div>
+                <Label>Give AI Control Webhook</Label>
+                <Input 
+                  placeholder="https://your-n8n-instance.com/webhook/give_control" 
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Endpoint to enable AI auto-reply for a conversation
+                </p>
+              </div>
+              <div>
+                <Label>Take Control Webhook</Label>
+                <Input 
+                  placeholder="https://your-n8n-instance.com/webhook/take_control" 
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Endpoint to disable AI auto-reply and take manual control
+                </p>
               </div>
               <Button className="w-full gradient-primary">Save Webhook Configuration</Button>
             </div>

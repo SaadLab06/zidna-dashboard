@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, MessageCircle, Send } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Search, MessageCircle, Send, Bot } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { validateSearch } from "@/lib/validation";
@@ -134,26 +135,26 @@ const Messages = () => {
                           {thread.user_name?.[0]?.toUpperCase() || '?'}
                         </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                       <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
                           <p className="font-medium truncate">{thread.user_name || 'Unknown'}</p>
-                          {thread.unread_count > 0 && (
-                            <Badge variant="default" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                              {thread.unread_count}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {thread.unread_count > 0 && (
+                              <Badge variant="default" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                                {thread.unread_count}
+                              </Badge>
+                            )}
+                            {thread.ai_control && (
+                              <Badge className="bg-green-500 text-white whitespace-nowrap px-2 py-0.5">
+                                AI Active
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">{thread.last_message}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {thread.platform}
-                          </Badge>
-                          {thread.ai_control && (
-                            <Badge variant="secondary" className="text-xs">
-                              AI Active
-                            </Badge>
-                          )}
-                        </div>
+                        <Badge variant="outline" className="text-xs mt-1">
+                          {thread.platform}
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -183,9 +184,30 @@ const Messages = () => {
                       </Badge>
                     </div>
                   </div>
-                  {selectedThread.ai_control && (
-                    <Badge className="bg-success">AI Active</Badge>
-                  )}
+                  
+                  {/* AI Control Toggle */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">AI Agent:</span>
+                    <Switch 
+                      checked={selectedThread.ai_control}
+                      onCheckedChange={async (checked) => {
+                        const { error } = await supabase
+                          .from('threads')
+                          .update({ ai_control: checked })
+                          .eq('id', selectedThread.id);
+                        
+                        if (!error) {
+                          setSelectedThread({ ...selectedThread, ai_control: checked });
+                          toast.success(checked ? "AI control enabled" : "AI control disabled");
+                        } else {
+                          toast.error("Failed to update AI control");
+                        }
+                      }}
+                    />
+                    <Badge className={selectedThread.ai_control ? "bg-green-500" : "bg-gray-400"}>
+                      {selectedThread.ai_control ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
                 </div>
               </div>
 
@@ -193,22 +215,68 @@ const Messages = () => {
               <ScrollArea className="flex-1 p-4">
                 <div className="space-y-4">
                   {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.direction === 'out' ? 'justify-end' : 'justify-start'}`}
-                    >
+                    <div key={message.id}>
                       <div
-                        className={`max-w-[70%] rounded-lg p-3 ${
-                          message.direction === 'out'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        }`}
+                        className={`flex ${message.direction === 'out' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <p className="text-sm">{message.message}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {message.created_at && formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                        </p>
+                        <div
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            message.direction === 'out'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          }`}
+                        >
+                          <p className="text-sm">{message.message}</p>
+                          <p className="text-xs opacity-70 mt-1">
+                            {message.created_at && formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
                       </div>
+                      
+                      {/* Show AI Auto-Reply */}
+                      {message.direction === 'in' && message.ai_dm_reply && selectedThread.ai_control && (
+                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 rounded-r-lg">
+                          <div className="flex items-start gap-2">
+                            <Bot className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">
+                                AI Auto-Reply (will be sent automatically)
+                              </p>
+                              <p className="text-sm text-gray-700 dark:text-gray-300">
+                                {message.ai_dm_reply}
+                              </p>
+                              <div className="flex gap-2 mt-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={async () => {
+                                    const { error } = await supabase
+                                      .from('threads')
+                                      .update({ ai_control: false })
+                                      .eq('id', selectedThread.id);
+                                    
+                                    if (!error) {
+                                      setSelectedThread({ ...selectedThread, ai_control: false });
+                                      toast.success("Taken control from AI");
+                                    }
+                                  }}
+                                  className="text-xs"
+                                >
+                                  Take Control
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => toast.info("Edit functionality will be connected to webhook")}
+                                  className="text-xs"
+                                >
+                                  Edit Before Sending
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

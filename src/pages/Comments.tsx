@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, RefreshCw, MessageSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, RefreshCw, MessageSquare, Send, Edit, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Select,
@@ -13,8 +14,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { validateSearch } from "@/lib/validation";
 import { toast } from "sonner";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Comments = () => {
   const [comments, setComments] = useState<any[]>([]);
@@ -22,6 +42,10 @@ const Comments = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [platformFilter, setPlatformFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedComments, setSelectedComments] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const { isAdmin, isModerator } = useUserRole();
 
   useEffect(() => {
     fetchComments();
@@ -85,6 +109,53 @@ const Comments = () => {
       : 'bg-[#1877F2]/10 text-[#1877F2] border-[#1877F2]/20';
   };
 
+  const toggleSelection = (id: string) => {
+    setSelectedComments(prev =>
+      prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedComments.length === comments.length) {
+      setSelectedComments([]);
+    } else {
+      setSelectedComments(comments.map(c => c.id));
+    }
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      toast.success("Comment deleted successfully");
+      setCommentToDelete(null);
+      setDeleteDialogOpen(false);
+      fetchComments();
+    } else {
+      toast.error("Failed to delete comment");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    for (const id of selectedComments) {
+      await handleDeleteComment(id);
+    }
+    setSelectedComments([]);
+  };
+
+  const handleSendReply = (comment: any) => {
+    toast.info("Reply functionality will be connected to webhook");
+  };
+
+  const handleEditReply = (comment: any) => {
+    toast.info("Edit reply functionality will be connected to webhook");
+  };
+
+  const canModify = isAdmin || isModerator;
+
   return (
     <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
@@ -133,14 +204,14 @@ const Comments = () => {
         </div>
       </Card>
 
-      {/* Comments List */}
-      <div className="space-y-4">
+      {/* Comments Table */}
+      <Card className="border-0 shadow-lg overflow-hidden">
         {loading ? (
-          <Card className="p-6 border-0 shadow-lg">
+          <div className="p-6">
             <p className="text-center text-muted-foreground">Loading comments...</p>
-          </Card>
+          </div>
         ) : comments.length === 0 ? (
-          <Card className="p-12 border-0 shadow-lg">
+          <div className="p-12">
             <div className="text-center">
               <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No comments found</h3>
@@ -150,52 +221,157 @@ const Comments = () => {
                   : "Comments will appear here once they're received"}
               </p>
             </div>
-          </Card>
+          </div>
         ) : (
-          comments.map((comment) => (
-            <Card key={comment.id} className="p-6 border-0 shadow-lg hover:shadow-glow transition-all duration-300">
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-semibold text-lg">
-                    {comment.user_name?.[0]?.toUpperCase() || '?'}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <p className="font-semibold">{comment.user_name || 'Unknown User'}</p>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {canModify && (
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedComments.length === comments.length && comments.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                )}
+                <TableHead>User</TableHead>
+                <TableHead>Comment</TableHead>
+                <TableHead>Platform</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Time</TableHead>
+                {canModify && <TableHead>Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {comments.map((comment) => (
+                <TableRow key={comment.id}>
+                  {canModify && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedComments.includes(comment.id)}
+                        onCheckedChange={() => toggleSelection(comment.id)}
+                      />
+                    </TableCell>
+                  )}
+                  <TableCell className="font-medium">
+                    {comment.user_name || 'Unknown User'}
+                  </TableCell>
+                  <TableCell className="max-w-md">
+                    <p className="line-clamp-2">{comment.message}</p>
+                    {comment.ai_reply && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        AI Reply: {comment.ai_reply.slice(0, 50)}...
+                      </p>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Badge variant="outline" className={getPlatformColor(comment.platform)}>
                       {comment.platform}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
                     <Badge variant="outline" className={getStatusColor(comment.status || 'pending')}>
                       {comment.status || 'pending'}
                     </Badge>
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      {comment.created_at && formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground mb-3">{comment.message}</p>
-                  {comment.ai_reply && (
-                    <div className="bg-muted/50 rounded-lg p-3 border border-border">
-                      <p className="text-xs font-semibold text-muted-foreground mb-1">AI Reply:</p>
-                      <p className="text-sm">{comment.ai_reply}</p>
-                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {comment.created_at && formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                  </TableCell>
+                  {canModify && (
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleSendReply(comment)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Send className="h-3 w-3 mr-1" />
+                          Reply
+                        </Button>
+                        {comment.status === 'replied' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleEditReply(comment)}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                        )}
+                        {isAdmin && (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setCommentToDelete(comment.id);
+                              setDeleteDialogOpen(true);
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                   )}
-                  {comment.post_link && (
-                    <a 
-                      href={comment.post_link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline mt-2 inline-block"
-                    >
-                      View Original Post →
-                    </a>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-      </div>
+      </Card>
+
+      {/* Bulk Actions Bar */}
+      {selectedComments.length > 0 && canModify && (
+        <div className="fixed bottom-0 left-0 right-0 bg-blue-600 text-white p-4 shadow-lg z-50">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
+            <span className="font-medium">{selectedComments.length} item(s) selected</span>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => toast.info("Bulk reply will be connected to webhook")}
+                className="bg-white text-blue-600 hover:bg-gray-100"
+              >
+                Send Replies
+              </Button>
+              {isAdmin && (
+                <Button
+                  onClick={handleBulkDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Delete Selected
+                </Button>
+              )}
+              <Button
+                onClick={() => setSelectedComments([])}
+                variant="ghost"
+                className="text-white hover:bg-blue-700"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the comment.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => commentToDelete && handleDeleteComment(commentToDelete)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

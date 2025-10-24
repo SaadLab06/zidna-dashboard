@@ -162,7 +162,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Total Comments"
           value={stats.totalComments}
@@ -181,11 +181,6 @@ const Dashboard = () => {
           icon={Clock}
           trend={{ value: 5, isPositive: false }}
         />
-        <StatCard
-          title="Avg Response Time"
-          value={stats.avgResponseTime}
-          icon={TrendingUp}
-        />
       </div>
 
       {/* Charts Section */}
@@ -193,32 +188,46 @@ const Dashboard = () => {
         {/* Activity Trend */}
         <Card className="lg:col-span-2 p-6 border-0 shadow-lg">
           <h3 className="text-lg font-semibold mb-4">Activity Trend (Last 7 Days)</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={activityData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="date" className="text-xs" />
-              <YAxis className="text-xs" />
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart data={activityData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.1} />
+              <XAxis 
+                dataKey="date" 
+                className="text-xs" 
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <YAxis 
+                className="text-xs"
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              />
               <Tooltip 
+                formatter={(value: any, name: string) => [`${value} ${name.toLowerCase()}`, name]}
+                labelFormatter={(label) => label}
                 contentStyle={{ 
                   backgroundColor: 'hsl(var(--card))', 
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '0.5rem'
+                  borderRadius: '0.5rem',
+                  padding: '12px'
                 }}
               />
               <Legend />
               <Line 
                 type="monotone" 
                 dataKey="comments" 
-                stroke="hsl(217 91% 60%)" 
-                strokeWidth={2}
+                stroke="#3B82F6" 
+                strokeWidth={1}
                 name="Comments"
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
               />
               <Line 
                 type="monotone" 
                 dataKey="messages" 
-                stroke="hsl(142 76% 36%)" 
-                strokeWidth={2}
+                stroke="#10B981" 
+                strokeWidth={1}
                 name="Messages"
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -227,15 +236,20 @@ const Dashboard = () => {
         {/* Engagement Breakdown */}
         <Card className="p-6 border-0 shadow-lg">
           <h3 className="text-lg font-semibold mb-4">Engagement Breakdown</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={500}>
             <PieChart>
               <Pie
                 data={engagementData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
+                labelLine={true}
+                label={({ name, percent }) => {
+                  const parts = name.split(' ');
+                  const platform = parts[0];
+                  const type = parts[1];
+                  return `${platform} ${type} ${(percent * 100).toFixed(0)}%`;
+                }}
+                outerRadius={120}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -243,7 +257,14 @@ const Dashboard = () => {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip 
+                formatter={(value: any, name: string) => [`${value}`, name]}
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))', 
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '0.5rem'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </Card>
