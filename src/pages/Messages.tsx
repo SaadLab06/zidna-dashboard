@@ -321,6 +321,14 @@ const Messages = () => {
                         const messageText = newMessage.trim();
                         setNewMessage("");
                         
+                        // Get the recipient_id from the last incoming message
+                        const lastIncomingMessage = messages.find(m => m.direction === 'in');
+                        if (!lastIncomingMessage?.sender_id) {
+                          toast.error("Cannot determine recipient ID");
+                          setNewMessage(messageText);
+                          return;
+                        }
+                        
                         // Get webhook URL for DM reply
                         const { data: webhooks, error: webhookError } = await supabase
                           .from('webhooks_config')
@@ -347,8 +355,8 @@ const Messages = () => {
                               'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                              recipient_id: selectedThread.thread_id,
-                              sender_id: 'admin',
+                              recipient_id: lastIncomingMessage.recipient_id,
+                              sender_id: lastIncomingMessage.sender_id,
                               ai_dm_reply: messageText
                             }),
                           });
@@ -388,6 +396,14 @@ const Messages = () => {
                       const messageText = newMessage.trim();
                       setNewMessage("");
                       
+                      // Get the recipient_id from the last incoming message
+                      const lastIncomingMessage = messages.find(m => m.direction === 'in');
+                      if (!lastIncomingMessage?.sender_id) {
+                        toast.error("Cannot determine recipient ID");
+                        setNewMessage(messageText);
+                        return;
+                      }
+                      
                       // Get webhook URL for DM reply
                       const { data: webhooks, error: webhookError } = await supabase
                         .from('webhooks_config')
@@ -414,8 +430,8 @@ const Messages = () => {
                             'Content-Type': 'application/json',
                           },
                           body: JSON.stringify({
-                            recipient_id: selectedThread.thread_id,
-                            sender_id: 'admin',
+                            recipient_id: lastIncomingMessage.recipient_id,
+                            sender_id: lastIncomingMessage.sender_id,
                             ai_dm_reply: messageText
                           }),
                         });
