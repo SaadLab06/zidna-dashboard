@@ -264,14 +264,6 @@ const Messages = () => {
                                 >
                                   Take Control
                                 </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => toast.info("Edit functionality will be connected to webhook")}
-                                  className="text-xs"
-                                >
-                                  Edit Before Sending
-                                </Button>
                               </div>
                             </div>
                           </div>

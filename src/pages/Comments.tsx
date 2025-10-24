@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Search, RefreshCw, MessageSquare, Send, Edit, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -32,6 +34,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { validateSearch } from "@/lib/validation";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -45,6 +55,10 @@ const Comments = () => {
   const [selectedComments, setSelectedComments] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [replyDialogOpen, setReplyDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [currentComment, setCurrentComment] = useState<any>(null);
+  const [replyText, setReplyText] = useState("");
   const { isAdmin, isModerator } = useUserRole();
 
   useEffect(() => {
@@ -123,35 +137,154 @@ const Comments = () => {
     }
   };
 
-  const handleDeleteComment = async (id: string) => {
-    const { error } = await supabase
-      .from('comments')
-      .delete()
-      .eq('id', id);
+  const callWebhook = async (endpoint: string, payload: any) => {
+    try {
+      const { data: webhookData } = await supabase
+        .from('webhooks_config')
+        .select('endpoint')
+        .eq('name', endpoint)
+        .single();
 
-    if (!error) {
+      if (!webhookData?.endpoint) {
+        toast.error(`Webhook ${endpoint} not configured`);
+        return false;
+      }
+
+      const response = await fetch(webhookData.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Webhook call failed');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Webhook error:', error);
+      toast.error('Failed to call webhook');
+      return false;
+    }
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    const comment = comments.find(c => c.id === id);
+    if (!comment) return;
+
+    const success = await callWebhook('delete_comment', {
+      comment_id: comment.comment_id,
+      platform: comment.platform
+    });
+
+    if (success) {
+      await supabase.from('comments').delete().eq('id', id);
       toast.success("Comment deleted successfully");
       setCommentToDelete(null);
       setDeleteDialogOpen(false);
       fetchComments();
-    } else {
-      toast.error("Failed to delete comment");
     }
   };
 
   const handleBulkDelete = async () => {
-    for (const id of selectedComments) {
-      await handleDeleteComment(id);
+    const selectedCommentData = comments.filter(c => selectedComments.includes(c.id));
+    const ids = selectedCommentData.map(c => c.comment_id);
+    const platform = selectedCommentData[0]?.platform;
+
+    const success = await callWebhook('delete_comment', {
+      ids,
+      platform
+    });
+
+    if (success) {
+      for (const id of selectedComments) {
+        await supabase.from('comments').delete().eq('id', id);
+      }
+      toast.success("Comments deleted successfully");
+      setSelectedComments([]);
+      fetchComments();
     }
-    setSelectedComments([]);
   };
 
   const handleSendReply = (comment: any) => {
-    toast.info("Reply functionality will be connected to webhook");
+    setCurrentComment(comment);
+    setReplyText(comment.ai_reply || "");
+    setReplyDialogOpen(true);
+  };
+
+  const handleConfirmReply = async () => {
+    if (!currentComment || !replyText.trim()) return;
+
+    const success = await callWebhook('comment_reply', {
+      comment_id: currentComment.comment_id,
+      reply_text: replyText,
+      platform: currentComment.platform
+    });
+
+    if (success) {
+      await supabase
+        .from('comments')
+        .update({ status: 'replied', ai_reply: replyText })
+        .eq('id', currentComment.id);
+      
+      toast.success("Reply sent successfully");
+      setReplyDialogOpen(false);
+      setReplyText("");
+      setCurrentComment(null);
+      fetchComments();
+    }
   };
 
   const handleEditReply = (comment: any) => {
-    toast.info("Edit reply functionality will be connected to webhook");
+    setCurrentComment(comment);
+    setReplyText(comment.ai_reply || "");
+    setEditDialogOpen(true);
+  };
+
+  const handleConfirmEdit = async () => {
+    if (!currentComment || !replyText.trim()) return;
+
+    const success = await callWebhook('comment_reply', {
+      comment_id: currentComment.comment_id,
+      reply_text: replyText,
+      platform: currentComment.platform
+    });
+
+    if (success) {
+      await supabase
+        .from('comments')
+        .update({ ai_reply: replyText })
+        .eq('id', currentComment.id);
+      
+      toast.success("Reply updated successfully");
+      setEditDialogOpen(false);
+      setReplyText("");
+      setCurrentComment(null);
+      fetchComments();
+    }
+  };
+
+  const handleBulkSendReplies = async () => {
+    const selectedCommentData = comments.filter(c => selectedComments.includes(c.id));
+    const ids = selectedCommentData.map(c => c.comment_id);
+    const platform = selectedCommentData[0]?.platform;
+
+    const success = await callWebhook('comment_reply', {
+      ids,
+      platform
+    });
+
+    if (success) {
+      for (const id of selectedComments) {
+        await supabase
+          .from('comments')
+          .update({ status: 'replied' })
+          .eq('id', id);
+      }
+      toast.success("Replies sent successfully");
+      setSelectedComments([]);
+      fetchComments();
+    }
   };
 
   const canModify = isAdmin || isModerator;
@@ -327,7 +460,7 @@ const Comments = () => {
             <span className="font-medium">{selectedComments.length} item(s) selected</span>
             <div className="flex gap-3">
               <Button
-                onClick={() => toast.info("Bulk reply will be connected to webhook")}
+                onClick={handleBulkSendReplies}
                 className="bg-white text-blue-600 hover:bg-gray-100"
               >
                 Send Replies
@@ -372,6 +505,84 @@ const Comments = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Send Reply Dialog */}
+      <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Reply</DialogTitle>
+            <DialogDescription>
+              Compose a reply to {currentComment?.user_name}'s comment
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Original Comment</Label>
+              <p className="text-sm text-muted-foreground mt-1 p-3 bg-muted rounded">
+                {currentComment?.message}
+              </p>
+            </div>
+            <div>
+              <Label>Your Reply</Label>
+              <Textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Type your reply..."
+                className="mt-2"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReplyDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmReply} className="bg-blue-600 hover:bg-blue-700">
+              <Send className="h-4 w-4 mr-2" />
+              Send Reply
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Reply Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Reply</DialogTitle>
+            <DialogDescription>
+              Update your reply to {currentComment?.user_name}'s comment
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Original Comment</Label>
+              <p className="text-sm text-muted-foreground mt-1 p-3 bg-muted rounded">
+                {currentComment?.message}
+              </p>
+            </div>
+            <div>
+              <Label>Updated Reply</Label>
+              <Textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Type your reply..."
+                className="mt-2"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmEdit} className="bg-yellow-500 hover:bg-yellow-600">
+              <Edit className="h-4 w-4 mr-2" />
+              Update Reply
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
