@@ -203,6 +203,34 @@ const Messages = () => {
                         if (!error) {
                           setSelectedThread({ ...selectedThread, ai_control: checked });
                           toast.success(checked ? "AI control enabled" : "AI control disabled");
+                          
+                          // Trigger webhook
+                          const { data: webhooks } = await supabase
+                            .from('webhooks_config')
+                            .select('endpoint')
+                            .eq('name', 'ai_control_change')
+                            .single();
+                          
+                          if (webhooks?.endpoint) {
+                            try {
+                              await fetch(webhooks.endpoint, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                mode: 'no-cors',
+                                body: JSON.stringify({
+                                  thread_id: selectedThread.thread_id,
+                                  user_name: selectedThread.user_name,
+                                  platform: selectedThread.platform,
+                                  ai_control: checked,
+                                  timestamp: new Date().toISOString(),
+                                }),
+                              });
+                            } catch (error) {
+                              console.error('Webhook error:', error);
+                            }
+                          }
                         } else {
                           toast.error("Failed to update AI control");
                         }
