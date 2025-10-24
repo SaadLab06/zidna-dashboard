@@ -204,7 +204,7 @@ const Messages = () => {
                           setSelectedThread({ ...selectedThread, ai_control: checked });
                           toast.success(checked ? "AI control enabled" : "AI control disabled");
                           
-                          // Trigger webhook
+                          // Trigger webhook for AI control change
                           const { data: webhooks, error: webhookError } = await supabase
                             .from('webhooks_config')
                             .select('endpoint')
@@ -321,11 +321,11 @@ const Messages = () => {
                         const messageText = newMessage.trim();
                         setNewMessage("");
                         
-                        // Get webhook URL for message sending
+                        // Get webhook URL for DM reply
                         const { data: webhooks, error: webhookError } = await supabase
                           .from('webhooks_config')
                           .select('endpoint')
-                          .eq('name', 'send_message')
+                          .eq('name', 'dm_reply')
                           .maybeSingle();
                         
                         if (webhookError) {
@@ -388,11 +388,11 @@ const Messages = () => {
                       const messageText = newMessage.trim();
                       setNewMessage("");
                       
-                      // Get webhook URL for message sending
+                      // Get webhook URL for DM reply
                       const { data: webhooks, error: webhookError } = await supabase
                         .from('webhooks_config')
                         .select('endpoint')
-                        .eq('name', 'send_message')
+                        .eq('name', 'dm_reply')
                         .maybeSingle();
                       
                       if (webhookError) {
