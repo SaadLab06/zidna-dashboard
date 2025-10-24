@@ -28,8 +28,14 @@ const Messages = () => {
       })
       .subscribe();
 
+    // Auto-refresh threads every 10 seconds
+    const threadsInterval = setInterval(() => {
+      fetchThreads();
+    }, 10000);
+
     return () => {
       supabase.removeChannel(threadsChannel);
+      clearInterval(threadsInterval);
     };
   }, []);
 
@@ -49,8 +55,14 @@ const Messages = () => {
       })
       .subscribe();
 
+    // Auto-refresh messages every 5 seconds
+    const messagesInterval = setInterval(() => {
+      fetchMessages(selectedThread.thread_id);
+    }, 5000);
+
     return () => {
       supabase.removeChannel(messagesChannel);
+      clearInterval(messagesInterval);
     };
   }, [selectedThread]);
 
