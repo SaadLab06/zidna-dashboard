@@ -321,18 +321,59 @@ const Messages = () => {
                         const messageText = newMessage.trim();
                         setNewMessage("");
                         
-                        const { error } = await supabase
-                          .from('messages')
-                          .insert({
-                            thread_id: selectedThread.thread_id,
-                            platform: selectedThread.platform,
-                            message: messageText,
-                            direction: 'out',
-                            sender_name: 'Admin'
-                          });
+                        // Get webhook URL for message sending
+                        const { data: webhooks } = await supabase
+                          .from('webhooks_config')
+                          .select('endpoint')
+                          .eq('name', 'send_message')
+                          .single();
                         
-                        if (error) {
-                          toast.error("Failed to send message");
+                        if (!webhooks?.endpoint) {
+                          toast.error("No webhook configured for sending messages");
+                          return;
+                        }
+                        
+                        try {
+                          // First, make the webhook call
+                          const webhookResponse = await fetch(webhooks.endpoint, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              thread_id: selectedThread.thread_id,
+                              platform: selectedThread.platform,
+                              message: messageText,
+                              direction: 'out',
+                              sender_name: 'Admin',
+                              user_name: selectedThread.user_name,
+                              timestamp: new Date().toISOString(),
+                            }),
+                          });
+                          
+                          // Only save to database if webhook call was successful
+                          if (webhookResponse.ok) {
+                            const { error } = await supabase
+                              .from('messages')
+                              .insert({
+                                thread_id: selectedThread.thread_id,
+                                platform: selectedThread.platform,
+                                message: messageText,
+                                direction: 'out',
+                                sender_name: 'Admin'
+                              });
+                            
+                            if (error) {
+                              toast.error("Failed to save message to database");
+                            }
+                          } else {
+                            toast.error("Webhook failed - message not saved");
+                            setNewMessage(messageText); // Restore the message
+                          }
+                        } catch (error) {
+                          console.error('Error:', error);
+                          toast.error("Failed to send message - webhook error");
+                          setNewMessage(messageText); // Restore the message
                         }
                       }
                     }}
@@ -345,18 +386,59 @@ const Messages = () => {
                       const messageText = newMessage.trim();
                       setNewMessage("");
                       
-                      const { error } = await supabase
-                        .from('messages')
-                        .insert({
-                          thread_id: selectedThread.thread_id,
-                          platform: selectedThread.platform,
-                          message: messageText,
-                          direction: 'out',
-                          sender_name: 'Admin'
-                        });
+                      // Get webhook URL for message sending
+                      const { data: webhooks } = await supabase
+                        .from('webhooks_config')
+                        .select('endpoint')
+                        .eq('name', 'send_message')
+                        .single();
                       
-                      if (error) {
-                        toast.error("Failed to send message");
+                      if (!webhooks?.endpoint) {
+                        toast.error("No webhook configured for sending messages");
+                        return;
+                      }
+                      
+                      try {
+                        // First, make the webhook call
+                        const webhookResponse = await fetch(webhooks.endpoint, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            thread_id: selectedThread.thread_id,
+                            platform: selectedThread.platform,
+                            message: messageText,
+                            direction: 'out',
+                            sender_name: 'Admin',
+                            user_name: selectedThread.user_name,
+                            timestamp: new Date().toISOString(),
+                          }),
+                        });
+                        
+                        // Only save to database if webhook call was successful
+                        if (webhookResponse.ok) {
+                          const { error } = await supabase
+                            .from('messages')
+                            .insert({
+                              thread_id: selectedThread.thread_id,
+                              platform: selectedThread.platform,
+                              message: messageText,
+                              direction: 'out',
+                              sender_name: 'Admin'
+                            });
+                          
+                          if (error) {
+                            toast.error("Failed to save message to database");
+                          }
+                        } else {
+                          toast.error("Webhook failed - message not saved");
+                          setNewMessage(messageText); // Restore the message
+                        }
+                      } catch (error) {
+                        console.error('Error:', error);
+                        toast.error("Failed to send message - webhook error");
+                        setNewMessage(messageText); // Restore the message
                       }
                     }}
                   >
