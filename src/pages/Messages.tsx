@@ -238,37 +238,39 @@ const Messages = () => {
                       </div>
                       
                       {/* Show AI Auto-Reply */}
-                      {message.direction === 'in' && message.ai_dm_reply && selectedThread.ai_control && (
+                      {message.direction === 'in' && message.ai_dm_reply && (
                         <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 rounded-r-lg">
                           <div className="flex items-start gap-2">
                             <Bot className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">
-                                AI Auto-Reply (will be sent automatically)
+                                AI {selectedThread.ai_control ? 'Auto-Reply (will be sent automatically)' : 'Reply'}
                               </p>
                               <p className="text-sm text-gray-700 dark:text-gray-300">
                                 {message.ai_dm_reply}
                               </p>
-                              <div className="flex gap-2 mt-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={async () => {
-                                    const { error } = await supabase
-                                      .from('threads')
-                                      .update({ ai_control: false })
-                                      .eq('id', selectedThread.id);
-                                    
-                                    if (!error) {
-                                      setSelectedThread({ ...selectedThread, ai_control: false });
-                                      toast.success("Taken control from AI");
-                                    }
-                                  }}
-                                  className="text-xs"
-                                >
-                                  Take Control
-                                </Button>
-                              </div>
+                              {selectedThread.ai_control && (
+                                <div className="flex gap-2 mt-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={async () => {
+                                      const { error } = await supabase
+                                        .from('threads')
+                                        .update({ ai_control: false })
+                                        .eq('id', selectedThread.id);
+                                      
+                                      if (!error) {
+                                        setSelectedThread({ ...selectedThread, ai_control: false });
+                                        toast.success("Taken control from AI");
+                                      }
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    Take Control
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -286,14 +288,50 @@ const Messages = () => {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     maxLength={1000}
-                    onKeyPress={(e) => {
+                    onKeyPress={async (e) => {
                       if (e.key === 'Enter' && newMessage.trim()) {
-                        // Handle send message
+                        const messageText = newMessage.trim();
                         setNewMessage("");
+                        
+                        const { error } = await supabase
+                          .from('messages')
+                          .insert({
+                            thread_id: selectedThread.thread_id,
+                            platform: selectedThread.platform,
+                            message: messageText,
+                            direction: 'out',
+                            sender_name: 'Admin'
+                          });
+                        
+                        if (error) {
+                          toast.error("Failed to send message");
+                        }
                       }
                     }}
                   />
-                  <Button size="icon">
+                  <Button 
+                    size="icon"
+                    onClick={async () => {
+                      if (!newMessage.trim()) return;
+                      
+                      const messageText = newMessage.trim();
+                      setNewMessage("");
+                      
+                      const { error } = await supabase
+                        .from('messages')
+                        .insert({
+                          thread_id: selectedThread.thread_id,
+                          platform: selectedThread.platform,
+                          message: messageText,
+                          direction: 'out',
+                          sender_name: 'Admin'
+                        });
+                      
+                      if (error) {
+                        toast.error("Failed to send message");
+                      }
+                    }}
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
