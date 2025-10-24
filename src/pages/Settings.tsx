@@ -10,7 +10,6 @@ import { Bot, Bell, Webhook, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { validateWebhookForStorage } from "@/lib/webhookValidation";
 import { toast } from "sonner";
-
 const Settings = () => {
   const [webhookUrls, setWebhookUrls] = useState({
     commentReply: "",
@@ -19,13 +18,11 @@ const Settings = () => {
     uploadFile: "",
     deleteFile: "",
     giveControl: "",
-    takeControl: "",
+    takeControl: ""
   });
-
   const handleSaveWebhooks = () => {
     // Validate all webhook URLs before saving
     const webhooksToValidate = Object.entries(webhookUrls);
-    
     for (const [name, url] of webhooksToValidate) {
       if (url) {
         const validation = validateWebhookForStorage(url);
@@ -35,26 +32,16 @@ const Settings = () => {
         }
       }
     }
-    
     toast.error("Settings backend not yet implemented. Webhook validation passed.");
   };
-
-  return (
-    <div className="space-y-6 animate-in">
+  return <div className="space-y-6 animate-in">
       <div>
         <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-2">Configure your social media integrations and AI preferences</p>
       </div>
 
       {/* Security Warning */}
-      <Alert className="border-orange-500 bg-orange-50">
-        <AlertTriangle className="h-4 w-4 text-orange-600" />
-        <AlertDescription className="text-sm text-orange-800">
-          <strong>Security Notice:</strong> This Settings page is not yet functional. Before enabling:
-          API tokens must be stored in Supabase Vault (not plaintext), and webhook URLs will be validated
-          against an allowlist to prevent SSRF attacks.
-        </AlertDescription>
-      </Alert>
+      
 
       <Tabs defaultValue="ai" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
@@ -150,84 +137,70 @@ const Settings = () => {
             <div className="space-y-4">
               <div>
                 <Label>Comment Reply Webhook</Label>
-                <Input 
-                  placeholder="https://hooks.zapier.com/..." 
-                  className="mt-2"
-                  value={webhookUrls.commentReply}
-                  onChange={(e) => setWebhookUrls({...webhookUrls, commentReply: e.target.value})}
-                />
+                <Input placeholder="https://hooks.zapier.com/..." className="mt-2" value={webhookUrls.commentReply} onChange={e => setWebhookUrls({
+                ...webhookUrls,
+                commentReply: e.target.value
+              })} />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for sending comment replies to platforms
                 </p>
               </div>
               <div>
                 <Label>DM Reply Webhook</Label>
-                <Input 
-                  placeholder="https://hooks.zapier.com/..." 
-                  className="mt-2"
-                  value={webhookUrls.dmReply}
-                  onChange={(e) => setWebhookUrls({...webhookUrls, dmReply: e.target.value})}
-                />
+                <Input placeholder="https://hooks.zapier.com/..." className="mt-2" value={webhookUrls.dmReply} onChange={e => setWebhookUrls({
+                ...webhookUrls,
+                dmReply: e.target.value
+              })} />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for sending direct message replies
                 </p>
               </div>
               <div>
                 <Label>Delete Comment Webhook</Label>
-                <Input 
-                  placeholder="https://hooks.zapier.com/..." 
-                  className="mt-2"
-                  value={webhookUrls.deleteComment}
-                  onChange={(e) => setWebhookUrls({...webhookUrls, deleteComment: e.target.value})}
-                />
+                <Input placeholder="https://hooks.zapier.com/..." className="mt-2" value={webhookUrls.deleteComment} onChange={e => setWebhookUrls({
+                ...webhookUrls,
+                deleteComment: e.target.value
+              })} />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for deleting comments from platforms
                 </p>
               </div>
               <div>
                 <Label>Upload File Webhook (AI Documents)</Label>
-                <Input 
-                  placeholder="https://hooks.zapier.com/..." 
-                  className="mt-2"
-                  value={webhookUrls.uploadFile}
-                  onChange={(e) => setWebhookUrls({...webhookUrls, uploadFile: e.target.value})}
-                />
+                <Input placeholder="https://hooks.zapier.com/..." className="mt-2" value={webhookUrls.uploadFile} onChange={e => setWebhookUrls({
+                ...webhookUrls,
+                uploadFile: e.target.value
+              })} />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for uploading and embedding AI documents
                 </p>
               </div>
               <div>
                 <Label>Delete Document Webhook (AI Documents)</Label>
-                <Input 
-                  placeholder="https://hooks.zapier.com/..." 
-                  className="mt-2"
-                  value={webhookUrls.deleteFile}
-                  onChange={(e) => setWebhookUrls({...webhookUrls, deleteFile: e.target.value})}
-                />
+                <Input placeholder="https://hooks.zapier.com/..." className="mt-2" value={webhookUrls.deleteFile} onChange={e => setWebhookUrls({
+                ...webhookUrls,
+                deleteFile: e.target.value
+              })} />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for deleting AI documents
                 </p>
               </div>
               <div>
                 <Label>Give AI Control Webhook</Label>
-                <Input 
-                  placeholder="https://hooks.zapier.com/..." 
-                  className="mt-2"
-                  value={webhookUrls.giveControl}
-                  onChange={(e) => setWebhookUrls({...webhookUrls, giveControl: e.target.value})}
-                />
+                <Input placeholder="https://hooks.zapier.com/..." className="mt-2" value={webhookUrls.giveControl} onChange={e => setWebhookUrls({
+                ...webhookUrls,
+                giveControl: e.target.value
+              })} />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint to enable AI auto-reply for a conversation
                 </p>
               </div>
               <div>
                 <Label>Take Control Webhook</Label>
-                <Input 
-                  placeholder="https://hooks.zapier.com/..." 
-                  className="mt-2"
-                  value={webhookUrls.takeControl}
-                  onChange={(e) => setWebhookUrls({...webhookUrls, takeControl: e.target.value})}
-                />
+                <Input placeholder="https://hooks.zapier.com/..." className="mt-2" value={webhookUrls.takeControl} onChange={e => setWebhookUrls({
+                ...webhookUrls,
+                takeControl: e.target.value
+              })} />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint to disable AI auto-reply and take manual control
                 </p>
@@ -265,8 +238,6 @@ const Settings = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default Settings;
