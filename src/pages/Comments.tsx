@@ -287,8 +287,6 @@ const Comments = () => {
     }
   };
 
-  const canModify = isAdmin || isModerator;
-
   return (
     <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
@@ -359,33 +357,29 @@ const Comments = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                {canModify && (
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedComments.length === comments.length && comments.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                )}
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedComments.length === comments.length && comments.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Comment</TableHead>
                 <TableHead>Platform</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Time</TableHead>
-                {canModify && <TableHead>Actions</TableHead>}
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {comments.map((comment) => (
                 <TableRow key={comment.id}>
-                  {canModify && (
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedComments.includes(comment.id)}
-                        onCheckedChange={() => toggleSelection(comment.id)}
-                      />
-                    </TableCell>
-                  )}
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedComments.includes(comment.id)}
+                      onCheckedChange={() => toggleSelection(comment.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     {comment.user_name || 'Unknown User'}
                   </TableCell>
@@ -410,42 +404,38 @@ const Comments = () => {
                   <TableCell className="text-xs text-muted-foreground">
                     {comment.created_at && formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                   </TableCell>
-                  {canModify && (
-                    <TableCell>
-                      <div className="flex gap-2">
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSendReply(comment)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Send className="h-3 w-3 mr-1" />
+                        Reply
+                      </Button>
+                      {comment.status === 'replied' && (
                         <Button
                           size="sm"
-                          onClick={() => handleSendReply(comment)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => handleEditReply(comment)}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white"
                         >
-                          <Send className="h-3 w-3 mr-1" />
-                          Reply
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
                         </Button>
-                        {comment.status === 'replied' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleEditReply(comment)}
-                            className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                          >
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </Button>
-                        )}
-                        {isAdmin && (
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setCommentToDelete(comment.id);
-                              setDeleteDialogOpen(true);
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  )}
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setCommentToDelete(comment.id);
+                          setDeleteDialogOpen(true);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -454,7 +444,7 @@ const Comments = () => {
       </Card>
 
       {/* Bulk Actions Bar */}
-      {selectedComments.length > 0 && canModify && (
+      {selectedComments.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-blue-600 text-white p-4 shadow-lg z-50">
           <div className="flex items-center justify-between max-w-7xl mx-auto">
             <span className="font-medium">{selectedComments.length} item(s) selected</span>
@@ -465,14 +455,12 @@ const Comments = () => {
               >
                 Send Replies
               </Button>
-              {isAdmin && (
-                <Button
-                  onClick={handleBulkDelete}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  Delete Selected
-                </Button>
-              )}
+              <Button
+                onClick={handleBulkDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete Selected
+              </Button>
               <Button
                 onClick={() => setSelectedComments([])}
                 variant="ghost"
