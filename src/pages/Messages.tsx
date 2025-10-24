@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Search, MessageCircle, Send, Bot } from "lucide-react";
+import { Search, MessageCircle, Send, Bot, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { validateSearch } from "@/lib/validation";
@@ -198,10 +198,24 @@ const Messages = () => {
                     </div>
                   </div>
                   
-                  {/* AI Control Toggle */}
+                  {/* Refresh and AI Control Toggle */}
                   <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        fetchThreads();
+                        if (selectedThread) {
+                          fetchMessages(selectedThread.thread_id);
+                        }
+                        toast.success("Refreshed");
+                      }}
+                      title="Refresh conversation"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
                     <span className="text-sm text-muted-foreground">AI Agent:</span>
-                    <Switch 
+                    <Switch
                       checked={selectedThread.ai_control}
                       onCheckedChange={async (checked) => {
                         try {
