@@ -64,7 +64,7 @@ const Layout = ({
       {/* Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
         <div className="p-6">
-          <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-slate-50">Zidna Social Hub</h1>
+          <h1 className="text-2xl font-bold text-foreground">Zidna Social Hub</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your social presence</p>
         </div>
         
