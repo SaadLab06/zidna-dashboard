@@ -52,6 +52,7 @@ const Messages = () => {
         filter: `thread_id=eq.${selectedThread.thread_id}`
       }, () => {
         fetchMessages(selectedThread.thread_id);
+        fetchThreads(); // Also update threads list when new message arrives
       })
       .subscribe();
 
@@ -440,6 +441,9 @@ const Messages = () => {
                             if (error) {
                               toast.error("Failed to save message to database");
                               console.error('Database insert error:', error);
+                            } else {
+                              // Refresh threads list to update last message
+                              fetchThreads();
                             }
                           } else {
                             toast.error("Webhook failed - message not saved");
@@ -534,6 +538,9 @@ const Messages = () => {
                           if (error) {
                             toast.error("Failed to save message to database");
                             console.error('Database insert error:', error);
+                          } else {
+                            // Refresh threads list to update last message
+                            fetchThreads();
                           }
                         } else {
                           toast.error("Webhook failed - message not saved");
