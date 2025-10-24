@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Upload, Search, RefreshCw } from "lucide-react";
+import { FileText, Upload, Search, RefreshCw, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { validateSearch } from "@/lib/validation";
@@ -116,6 +116,43 @@ const Documents = () => {
     }
   };
 
+  const handleDelete = async (doc: any) => {
+    // Get the webhook URL from settings
+    const { data: webhookConfig } = await supabase
+      .from('webhooks_config')
+      .select('endpoint')
+      .eq('name', 'delete_file')
+      .single();
+
+    if (!webhookConfig?.endpoint) {
+      toast.error("Please configure the delete webhook in Settings");
+      return;
+    }
+
+    try {
+      const response = await fetch(webhookConfig.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file_url: doc.file_url,
+          document_id: doc.id
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Delete failed: ${response.statusText}`);
+      }
+
+      toast.success("Document deleted successfully");
+      fetchDocuments();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error("Failed to delete document");
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
@@ -192,9 +229,19 @@ const Documents = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold truncate">{doc.name}</h3>
-                    <Badge variant="outline" className={getStatusColor(doc.status || 'processing')}>
-                      {doc.status || 'processing'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={getStatusColor(doc.status || 'processing')}>
+                        {doc.status || 'processing'}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(doc)}
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   {doc.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
