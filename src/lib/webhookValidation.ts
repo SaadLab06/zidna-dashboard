@@ -8,6 +8,7 @@ const ALLOWED_WEBHOOK_DOMAINS = [
   'pipedream.com',
   'n8n.cloud',
   'n8n.io',
+  'hstgr.cloud', // Hostinger cloud (n8n instances)
   'integromat.com',
   'api.telegram.org',
   'discord.com',
