@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Search, RefreshCw, MessageSquare, Send, Edit, Trash2 } from "lucide-react";
+import { isAllowedWebhookUrl } from "@/lib/webhookValidation";
 import { formatDistanceToNow } from "date-fns";
 import {
   Select,
@@ -150,10 +151,18 @@ const Comments = () => {
         return false;
       }
 
+      // Validate webhook URL to prevent SSRF attacks
+      const validation = isAllowedWebhookUrl(webhookData.endpoint);
+      if (!validation.valid) {
+        toast.error(`Webhook security error: ${validation.error}`);
+        return false;
+      }
+
       const response = await fetch(webhookData.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(10000), // 10 second timeout
       });
 
       if (!response.ok) {
@@ -162,7 +171,7 @@ const Comments = () => {
 
       return true;
     } catch (error) {
-      console.error('Webhook error:', error);
+      // Don't log sensitive webhook details to console
       toast.error('Failed to call webhook');
       return false;
     }

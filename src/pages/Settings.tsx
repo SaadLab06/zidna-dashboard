@@ -5,15 +5,61 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Instagram, Facebook, Bot, Bell, Webhook } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Instagram, Facebook, Bot, Bell, Webhook, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { validateWebhookForStorage } from "@/lib/webhookValidation";
+import { validateToken } from "@/lib/tokenEncryption";
+import { toast } from "sonner";
 
 const Settings = () => {
+  const [webhookUrls, setWebhookUrls] = useState({
+    commentReply: "",
+    dmReply: "",
+    deleteComment: "",
+    uploadFile: "",
+    deleteFile: "",
+    giveControl: "",
+    takeControl: "",
+  });
+
+  const handleSaveWebhooks = () => {
+    // Validate all webhook URLs before saving
+    const webhooksToValidate = Object.entries(webhookUrls);
+    
+    for (const [name, url] of webhooksToValidate) {
+      if (url) {
+        const validation = validateWebhookForStorage(url);
+        if (!validation.valid) {
+          toast.error(`Invalid webhook URL for ${name}: ${validation.error}`);
+          return;
+        }
+      }
+    }
+    
+    toast.error("Settings backend not yet implemented. Webhook validation passed.");
+  };
+
+  const handleSaveTokens = () => {
+    toast.error("Settings backend not yet implemented. Tokens must be stored in Supabase Vault for security.");
+  };
+
   return (
     <div className="space-y-6 animate-in">
       <div>
         <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-2">Configure your social media integrations and AI preferences</p>
       </div>
+
+      {/* Security Warning */}
+      <Alert className="border-orange-500 bg-orange-50">
+        <AlertTriangle className="h-4 w-4 text-orange-600" />
+        <AlertDescription className="text-sm text-orange-800">
+          <strong>Security Notice:</strong> This Settings page is not yet functional. Before enabling:
+          API tokens must be stored in Supabase Vault (not plaintext), and webhook URLs will be validated
+          against an allowlist to prevent SSRF attacks.
+        </AlertDescription>
+      </Alert>
 
       <Tabs defaultValue="accounts" className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
@@ -41,9 +87,12 @@ const Settings = () => {
             <div className="space-y-4">
               <div>
                 <Label>Page Access Token</Label>
-                <Input type="password" placeholder="••••••••••••••••" className="mt-2" />
+                <Input type="password" placeholder="••••••••••••••••" className="mt-2" disabled />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Token storage not yet implemented (requires Supabase Vault)
+                </p>
               </div>
-              <Button variant="outline" className="w-full">Refresh Connection</Button>
+              <Button variant="outline" className="w-full" disabled>Refresh Connection</Button>
             </div>
           </Card>
 
@@ -58,8 +107,12 @@ const Settings = () => {
               </div>
               <Badge variant="outline">Not Connected</Badge>
             </div>
-            <Button className="w-full gradient-primary">Connect Facebook</Button>
+            <Button className="w-full gradient-primary" disabled>Connect Facebook</Button>
           </Card>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSaveTokens} disabled>Save Tokens</Button>
+          </div>
         </TabsContent>
 
         <TabsContent value="ai" className="space-y-6">
@@ -144,14 +197,15 @@ const Settings = () => {
                 <h3 className="text-lg font-semibold">Webhook Configuration</h3>
                 <p className="text-sm text-muted-foreground">Manage external integrations</p>
               </div>
-              <Button variant="outline">Test Webhooks</Button>
             </div>
             <div className="space-y-4">
               <div>
                 <Label>Comment Reply Webhook</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/comments_send_reply" 
+                  placeholder="https://hooks.zapier.com/..." 
                   className="mt-2"
+                  value={webhookUrls.commentReply}
+                  onChange={(e) => setWebhookUrls({...webhookUrls, commentReply: e.target.value})}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for sending comment replies to platforms
@@ -160,8 +214,10 @@ const Settings = () => {
               <div>
                 <Label>DM Reply Webhook</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/dm_reply" 
+                  placeholder="https://hooks.zapier.com/..." 
                   className="mt-2"
+                  value={webhookUrls.dmReply}
+                  onChange={(e) => setWebhookUrls({...webhookUrls, dmReply: e.target.value})}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for sending direct message replies
@@ -170,8 +226,10 @@ const Settings = () => {
               <div>
                 <Label>Delete Comment Webhook</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/delete_comment" 
+                  placeholder="https://hooks.zapier.com/..." 
                   className="mt-2"
+                  value={webhookUrls.deleteComment}
+                  onChange={(e) => setWebhookUrls({...webhookUrls, deleteComment: e.target.value})}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for deleting comments from platforms
@@ -180,8 +238,10 @@ const Settings = () => {
               <div>
                 <Label>Upload File Webhook (AI Documents)</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/upload_file" 
+                  placeholder="https://hooks.zapier.com/..." 
                   className="mt-2"
+                  value={webhookUrls.uploadFile}
+                  onChange={(e) => setWebhookUrls({...webhookUrls, uploadFile: e.target.value})}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for uploading and embedding AI documents
@@ -190,8 +250,10 @@ const Settings = () => {
               <div>
                 <Label>Delete Document Webhook (AI Documents)</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/delete_file" 
+                  placeholder="https://hooks.zapier.com/..." 
                   className="mt-2"
+                  value={webhookUrls.deleteFile}
+                  onChange={(e) => setWebhookUrls({...webhookUrls, deleteFile: e.target.value})}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint for deleting AI documents
@@ -200,8 +262,10 @@ const Settings = () => {
               <div>
                 <Label>Give AI Control Webhook</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/give_control" 
+                  placeholder="https://hooks.zapier.com/..." 
                   className="mt-2"
+                  value={webhookUrls.giveControl}
+                  onChange={(e) => setWebhookUrls({...webhookUrls, giveControl: e.target.value})}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint to enable AI auto-reply for a conversation
@@ -210,14 +274,18 @@ const Settings = () => {
               <div>
                 <Label>Take Control Webhook</Label>
                 <Input 
-                  placeholder="https://your-n8n-instance.com/webhook/take_control" 
+                  placeholder="https://hooks.zapier.com/..." 
                   className="mt-2"
+                  value={webhookUrls.takeControl}
+                  onChange={(e) => setWebhookUrls({...webhookUrls, takeControl: e.target.value})}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Endpoint to disable AI auto-reply and take manual control
                 </p>
               </div>
-              <Button className="w-full gradient-primary">Save Webhook Configuration</Button>
+              <Button className="w-full gradient-primary" onClick={handleSaveWebhooks}>
+                Save Webhook Configuration
+              </Button>
             </div>
           </Card>
         </TabsContent>
