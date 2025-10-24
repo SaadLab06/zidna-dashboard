@@ -361,17 +361,19 @@ const Messages = () => {
                             }),
                           });
                           
-                          // Only save to database if webhook call was successful
-                          if (webhookResponse.ok) {
-                            const { error } = await supabase
-                              .from('messages')
-                              .insert({
-                                thread_id: selectedThread.thread_id,
-                                platform: selectedThread.platform,
-                                message: messageText,
-                                direction: 'out',
-                                sender_name: 'Admin'
-                              });
+                        // Only save to database if webhook call was successful
+                        if (webhookResponse.ok) {
+                          const { error } = await supabase
+                            .from('messages')
+                            .insert({
+                              thread_id: selectedThread.thread_id,
+                              platform: selectedThread.platform,
+                              message: messageText,
+                              direction: 'out',
+                              sender_name: 'Admin',
+                              sender_id: lastIncomingMessage.recipient_id,
+                              recipient_id: lastIncomingMessage.sender_id
+                            });
                             
                             if (error) {
                               toast.error("Failed to save message to database");
@@ -445,7 +447,9 @@ const Messages = () => {
                               platform: selectedThread.platform,
                               message: messageText,
                               direction: 'out',
-                              sender_name: 'Admin'
+                              sender_name: 'Admin',
+                              sender_id: lastIncomingMessage.recipient_id,
+                              recipient_id: lastIncomingMessage.sender_id
                             });
                           
                           if (error) {
