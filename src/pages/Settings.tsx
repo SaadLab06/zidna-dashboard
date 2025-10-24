@@ -7,9 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Bot, Bell, Webhook, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { validateWebhookForStorage } from "@/lib/webhookValidation";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 const Settings = () => {
   const [webhookUrls, setWebhookUrls] = useState({
     commentReply: "",
@@ -20,7 +21,48 @@ const Settings = () => {
     giveControl: "",
     takeControl: ""
   });
-  const handleSaveWebhooks = () => {
+  const [loading, setLoading] = useState(false);
+
+  // Load existing webhooks on mount
+  useEffect(() => {
+    loadWebhooks();
+  }, []);
+
+  const loadWebhooks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('webhooks_config')
+        .select('name, endpoint');
+
+      if (error) throw error;
+
+      if (data) {
+        const webhookMap: any = {
+          comment_reply: "commentReply",
+          dm_reply: "dmReply",
+          delete_comment: "deleteComment",
+          upload_file: "uploadFile",
+          delete_file: "deleteFile",
+          give_control: "giveControl",
+          take_control: "takeControl"
+        };
+
+        const loadedWebhooks = { ...webhookUrls };
+        data.forEach((webhook) => {
+          const key = webhookMap[webhook.name];
+          if (key) {
+            loadedWebhooks[key as keyof typeof loadedWebhooks] = webhook.endpoint || "";
+          }
+        });
+        setWebhookUrls(loadedWebhooks);
+      }
+    } catch (error) {
+      console.error('Error loading webhooks:', error);
+      toast.error("Failed to load webhook configuration");
+    }
+  };
+
+  const handleSaveWebhooks = async () => {
     // Validate all webhook URLs before saving
     const webhooksToValidate = Object.entries(webhookUrls);
     for (const [name, url] of webhooksToValidate) {
@@ -32,7 +74,49 @@ const Settings = () => {
         }
       }
     }
-    toast.error("Settings backend not yet implemented. Webhook validation passed.");
+
+    setLoading(true);
+    try {
+      const webhookMap = {
+        commentReply: { name: "comment_reply", description: "Endpoint for sending comment replies to platforms" },
+        dmReply: { name: "dm_reply", description: "Endpoint for sending direct message replies" },
+        deleteComment: { name: "delete_comment", description: "Endpoint for deleting comments from platforms" },
+        uploadFile: { name: "upload_file", description: "Endpoint for uploading and embedding AI documents" },
+        deleteFile: { name: "delete_file", description: "Endpoint for deleting AI documents" },
+        giveControl: { name: "give_control", description: "Endpoint to enable AI auto-reply for a conversation" },
+        takeControl: { name: "take_control", description: "Endpoint to disable AI auto-reply and take manual control" }
+      };
+
+      const upsertPromises = Object.entries(webhookUrls).map(([key, url]) => {
+        const config = webhookMap[key as keyof typeof webhookMap];
+        if (!url) return null; // Skip empty URLs
+
+        return supabase
+          .from('webhooks_config')
+          .upsert({
+            name: config.name,
+            endpoint: url,
+            description: config.description,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'name'
+          });
+      });
+
+      const results = await Promise.all(upsertPromises.filter(p => p !== null));
+      
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        throw errors[0].error;
+      }
+
+      toast.success("Webhook configuration saved successfully");
+    } catch (error) {
+      console.error('Error saving webhooks:', error);
+      toast.error("Failed to save webhook configuration");
+    } finally {
+      setLoading(false);
+    }
   };
   return <div className="space-y-6 animate-in">
       <div>
@@ -205,8 +289,8 @@ const Settings = () => {
                   Endpoint to disable AI auto-reply and take manual control
                 </p>
               </div>
-              <Button className="w-full gradient-primary" onClick={handleSaveWebhooks}>
-                Save Webhook Configuration
+              <Button className="w-full gradient-primary" onClick={handleSaveWebhooks} disabled={loading}>
+                {loading ? "Saving..." : "Save Webhook Configuration"}
               </Button>
             </div>
           </Card>
