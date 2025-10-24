@@ -129,9 +129,9 @@ const Messages = () => {
         <p className="text-muted-foreground mt-2">Manage conversations across platforms</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)] min-h-0">
         {/* Conversations List */}
-        <Card className="border-0 shadow-lg overflow-hidden h-full">
+        <Card className="border-0 shadow-lg overflow-hidden h-full min-h-0">
           <div className="p-4 border-b border-border">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -200,7 +200,7 @@ const Messages = () => {
         </Card>
 
         {/* Chat Window */}
-        <Card className="lg:col-span-2 border-0 shadow-lg flex flex-col h-full">
+        <Card className="lg:col-span-2 border-0 shadow-lg flex flex-col h-full min-h-0">
           {selectedThread ? (
             <>
               {/* Chat Header */}
@@ -302,7 +302,7 @@ const Messages = () => {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 min-h-0 overflow-hidden">
                 <ScrollArea className="h-full p-4">
                   <div className="space-y-4">
                     {messages.map((message) => (
