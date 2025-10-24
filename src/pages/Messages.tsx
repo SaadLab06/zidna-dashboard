@@ -28,20 +28,31 @@ const Messages = () => {
       })
       .subscribe();
 
+    return () => {
+      supabase.removeChannel(threadsChannel);
+    };
+  }, []);
+
+  // Separate effect for messages subscription that depends on selectedThread
+  useEffect(() => {
+    if (!selectedThread) return;
+
     const messagesChannel = supabase
-      .channel('messages-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
-        if (selectedThread) {
-          fetchMessages(selectedThread.thread_id);
-        }
+      .channel(`messages-realtime-${selectedThread.thread_id}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'messages',
+        filter: `thread_id=eq.${selectedThread.thread_id}`
+      }, () => {
+        fetchMessages(selectedThread.thread_id);
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(threadsChannel);
       supabase.removeChannel(messagesChannel);
     };
-  }, []);
+  }, [selectedThread]);
 
   useEffect(() => {
     if (selectedThread) {
@@ -341,6 +352,20 @@ const Messages = () => {
                           setNewMessage(messageText);
                           return;
                         }
+
+                        // Optimistically add message to UI immediately
+                        const optimisticMessage = {
+                          id: `temp-${Date.now()}`,
+                          thread_id: selectedThread.thread_id,
+                          platform: selectedThread.platform,
+                          message: messageText,
+                          direction: 'out',
+                          sender_name: 'Admin',
+                          sender_id: lastIncomingMessage.recipient_id,
+                          recipient_id: lastIncomingMessage.sender_id,
+                          created_at: new Date().toISOString()
+                        };
+                        setMessages(prev => [...prev, optimisticMessage]);
                         
                         // Get webhook URL for DM reply
                         const { data: webhooks, error: webhookError } = await supabase
@@ -390,10 +415,13 @@ const Messages = () => {
                             
                             if (error) {
                               toast.error("Failed to save message to database");
+                              console.error('Database insert error:', error);
                             }
                           } else {
                             toast.error("Webhook failed - message not saved");
                             setNewMessage(messageText);
+                            // Remove optimistic message on failure
+                            setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
                           }
                         } catch (error) {
                           console.error('Error:', error);
@@ -418,6 +446,20 @@ const Messages = () => {
                         setNewMessage(messageText);
                         return;
                       }
+
+                      // Optimistically add message to UI immediately
+                      const optimisticMessage = {
+                        id: `temp-${Date.now()}`,
+                        thread_id: selectedThread.thread_id,
+                        platform: selectedThread.platform,
+                        message: messageText,
+                        direction: 'out',
+                        sender_name: 'Admin',
+                        sender_id: lastIncomingMessage.recipient_id,
+                        recipient_id: lastIncomingMessage.sender_id,
+                        created_at: new Date().toISOString()
+                      };
+                      setMessages(prev => [...prev, optimisticMessage]);
                       
                       // Get webhook URL for DM reply
                       const { data: webhooks, error: webhookError } = await supabase
@@ -467,15 +509,20 @@ const Messages = () => {
                           
                           if (error) {
                             toast.error("Failed to save message to database");
+                            console.error('Database insert error:', error);
                           }
                         } else {
                           toast.error("Webhook failed - message not saved");
                           setNewMessage(messageText);
+                          // Remove optimistic message on failure
+                          setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
                         }
                       } catch (error) {
                         console.error('Error:', error);
                         toast.error("Failed to send message - webhook error");
                         setNewMessage(messageText);
+                        // Remove optimistic message on failure
+                        setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
                       }
                     }}
                   >
