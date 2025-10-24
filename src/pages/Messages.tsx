@@ -195,12 +195,20 @@ const Messages = () => {
                     <Switch 
                       checked={selectedThread.ai_control}
                       onCheckedChange={async (checked) => {
-                        const { error } = await supabase
-                          .from('threads')
-                          .update({ ai_control: checked })
-                          .eq('id', selectedThread.id);
-                        
-                        if (!error) {
+                        try {
+                          console.log('Toggle clicked, new state:', checked);
+                          
+                          const { error } = await supabase
+                            .from('threads')
+                            .update({ ai_control: checked })
+                            .eq('id', selectedThread.id);
+                          
+                          if (error) {
+                            console.error('Database update error:', error);
+                            toast.error("Failed to update AI control");
+                            return;
+                          }
+
                           setSelectedThread({ ...selectedThread, ai_control: checked });
                           toast.success(checked ? "AI control enabled" : "AI control disabled");
                           
@@ -216,8 +224,9 @@ const Messages = () => {
                           }
                           
                           if (webhooks?.endpoint) {
+                            console.log('Calling webhook:', webhooks.endpoint);
                             try {
-                              await fetch(webhooks.endpoint, {
+                              const response = await fetch(webhooks.endpoint, {
                                 method: 'POST',
                                 headers: {
                                   'Content-Type': 'application/json',
@@ -227,12 +236,16 @@ const Messages = () => {
                                   ai_control: checked
                                 }),
                               });
+                              console.log('Webhook response:', response.status);
                             } catch (error) {
                               console.error('Webhook error:', error);
                             }
+                          } else {
+                            console.log('No webhook configured for ai_control_change');
                           }
-                        } else {
-                          toast.error("Failed to update AI control");
+                        } catch (error) {
+                          console.error('Error in toggle handler:', error);
+                          toast.error("An error occurred");
                         }
                       }}
                     />
