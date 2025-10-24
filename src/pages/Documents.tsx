@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,9 @@ import { toast } from "sonner";
 const Documents = () => {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -61,6 +63,59 @@ const Documents = () => {
     return `${mb.toFixed(2)} MB`;
   };
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Get the webhook URL from settings
+    const { data: webhookConfig } = await supabase
+      .from('webhooks_config')
+      .select('endpoint')
+      .eq('name', 'upload_file')
+      .single();
+
+    if (!webhookConfig?.endpoint) {
+      toast.error("Please configure the upload webhook in Settings");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const file = files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('name', file.name);
+      formData.append('file_type', file.type);
+      formData.append('size', file.size.toString());
+
+      const response = await fetch(webhookConfig.endpoint, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      toast.success("Document uploaded successfully");
+      fetchDocuments();
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error("Failed to upload document");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
@@ -72,10 +127,21 @@ const Documents = () => {
           <Button onClick={fetchDocuments} variant="outline" size="icon">
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button className="gradient-primary">
+          <Button 
+            className="gradient-primary" 
+            onClick={handleUploadClick}
+            disabled={uploading}
+          >
             <Upload className="h-4 w-4 mr-2" />
-            Upload Document
+            {uploading ? "Uploading..." : "Upload Document"}
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            accept=".pdf,.doc,.docx,.txt,.md"
+          />
         </div>
       </div>
 
@@ -106,9 +172,13 @@ const Documents = () => {
               <p className="text-muted-foreground mb-6">
                 Upload documents to train your AI assistant
               </p>
-              <Button className="gradient-primary">
+              <Button 
+                className="gradient-primary"
+                onClick={handleUploadClick}
+                disabled={uploading}
+              >
                 <Upload className="h-4 w-4 mr-2" />
-                Upload Your First Document
+                {uploading ? "Uploading..." : "Upload Your First Document"}
               </Button>
             </div>
           </Card>
