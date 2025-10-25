@@ -1,8 +1,9 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, MessageSquare, FileText, Settings, MessageCircle, LogOut, User } from "lucide-react";
+import { LayoutDashboard, MessageSquare, FileText, Settings, MessageCircle, LogOut, User, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ const Layout = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState<string>("");
+  const { isSuperAdmin } = useUserRole();
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -60,6 +62,15 @@ const Layout = ({
     label: "Settings",
     path: "/settings"
   }];
+
+  // Add SuperAdmin link if user is superadmin
+  const allNavItems = isSuperAdmin 
+    ? [...navItems, {
+        icon: Shield,
+        label: "SuperAdmin",
+        path: "/superadmin"
+      }]
+    : navItems;
   return <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
@@ -69,7 +80,7 @@ const Layout = ({
         </div>
         
         <nav className="px-3 space-y-1 flex-1">
-          {navItems.map(item => {
+          {allNavItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
           return <Link key={item.path} to={item.path} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200", isActive ? "bg-sidebar-accent text-sidebar-primary font-medium shadow-glow" : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}>

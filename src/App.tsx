@@ -10,6 +10,7 @@ import Comments from "./pages/Comments";
 import Messages from "./pages/Messages";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
+import SuperAdmin from "./pages/SuperAdmin";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/messages" element={<ProtectedRoute><Layout><Messages /></Layout></ProtectedRoute>} />
           <Route path="/documents" element={<ProtectedRoute><Layout><Documents /></Layout></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
+          <Route path="/superadmin" element={<ProtectedRoute><Layout><SuperAdmin /></Layout></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

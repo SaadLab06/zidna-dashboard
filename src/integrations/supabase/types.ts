@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_actions: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_documents: {
         Row: {
           description: string | null
@@ -21,7 +51,7 @@ export type Database = {
           file_url: string | null
           id: string
           name: string
-          size: number | null
+          size: string | null
           status: string | null
           tags: string[] | null
           uploaded_at: string | null
@@ -32,7 +62,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           name: string
-          size?: number | null
+          size?: string | null
           status?: string | null
           tags?: string[] | null
           uploaded_at?: string | null
@@ -43,7 +73,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           name?: string
-          size?: number | null
+          size?: string | null
           status?: string | null
           tags?: string[] | null
           uploaded_at?: string | null
@@ -219,6 +249,8 @@ export type Database = {
           ig_cmnt_reply_webhook: string | null
           ig_dm_reply_webhook: string | null
           ig_page_token: string | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -228,6 +260,8 @@ export type Database = {
           ig_cmnt_reply_webhook?: string | null
           ig_dm_reply_webhook?: string | null
           ig_page_token?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -237,6 +271,8 @@ export type Database = {
           ig_cmnt_reply_webhook?: string | null
           ig_dm_reply_webhook?: string | null
           ig_page_token?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -273,6 +309,30 @@ export type Database = {
           thread_id?: string | null
           unread_count?: number | null
           user_name?: string | null
+        }
+        Relationships: []
+      }
+      user_activity: {
+        Row: {
+          created_at: string | null
+          event: string
+          id: string
+          meta: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event: string
+          id?: string
+          meta?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event?: string
+          id?: string
+          meta?: Json | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -326,13 +386,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      has_role:
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
+        | { Args: { _role: string; _user_id: string }; Returns: boolean }
       match_documents: {
         Args: { filter?: Json; match_count?: number; query_embedding: string }
         Returns: {
@@ -344,7 +406,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "superadmin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -472,7 +534,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "superadmin"],
     },
   },
 } as const

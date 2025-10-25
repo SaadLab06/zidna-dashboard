@@ -9,8 +9,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Bot, Bell, Webhook, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { validateWebhookForStorage } from "@/lib/webhookValidation";
+import { maskToken, isMaskedToken } from "@/lib/tokenMasking";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Eye, EyeOff } from "lucide-react";
 const Settings = () => {
   const [webhookUrls, setWebhookUrls] = useState({
     commentReply: "",
@@ -22,11 +24,105 @@ const Settings = () => {
     takeControl: ""
   });
   const [loading, setLoading] = useState(false);
+  const [userSettings, setUserSettings] = useState({
+    fb_page_token: "",
+    ig_page_token: "",
+    ig_cmnt_reply_webhook: "",
+    fb_cmnt_reply_webhook: "",
+    ig_dm_reply_webhook: ""
+  });
+  const [showTokens, setShowTokens] = useState({
+    fb_page_token: false,
+    ig_page_token: false
+  });
+  const [originalTokens, setOriginalTokens] = useState({
+    fb_page_token: "",
+    ig_page_token: ""
+  });
 
-  // Load existing webhooks on mount
+  // Load existing webhooks and settings on mount
   useEffect(() => {
     loadWebhooks();
+    loadUserSettings();
   }, []);
+
+  const loadUserSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        // Store original tokens and display masked versions
+        setOriginalTokens({
+          fb_page_token: data.fb_page_token || "",
+          ig_page_token: data.ig_page_token || ""
+        });
+        
+        setUserSettings({
+          fb_page_token: maskToken(data.fb_page_token),
+          ig_page_token: maskToken(data.ig_page_token),
+          ig_cmnt_reply_webhook: data.ig_cmnt_reply_webhook || "",
+          fb_cmnt_reply_webhook: data.fb_cmnt_reply_webhook || "",
+          ig_dm_reply_webhook: data.ig_dm_reply_webhook || ""
+        });
+      } else {
+        // Create default settings for new user
+        await supabase.from('settings').insert({
+          user_id: user.id
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user settings:', error);
+      toast.error("Failed to load user settings");
+    }
+  };
+
+  const saveUserSettings = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Only update tokens if they've been changed (not masked)
+      const settingsToSave: any = {
+        ig_cmnt_reply_webhook: userSettings.ig_cmnt_reply_webhook,
+        fb_cmnt_reply_webhook: userSettings.fb_cmnt_reply_webhook,
+        ig_dm_reply_webhook: userSettings.ig_dm_reply_webhook
+      };
+
+      if (!isMaskedToken(userSettings.fb_page_token)) {
+        settingsToSave.fb_page_token = userSettings.fb_page_token;
+      }
+      if (!isMaskedToken(userSettings.ig_page_token)) {
+        settingsToSave.ig_page_token = userSettings.ig_page_token;
+      }
+
+      const { error } = await supabase
+        .from('settings')
+        .upsert({
+          user_id: user.id,
+          ...settingsToSave
+        });
+
+      if (error) throw error;
+
+      toast.success("Settings saved successfully");
+      await loadUserSettings();
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      toast.error(error.message || "Failed to save settings");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadWebhooks = async () => {
     try {
@@ -142,35 +238,93 @@ const Settings = () => {
                 <Bot className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">AI Configuration</h3>
-                <p className="text-sm text-muted-foreground">Customize AI response behavior</p>
+                <h3 className="text-lg font-semibold">Platform Tokens</h3>
+                <p className="text-sm text-muted-foreground">Manage your platform access tokens</p>
               </div>
             </div>
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Auto-Reply</Label>
-                  <p className="text-sm text-muted-foreground">Enable automatic AI responses</p>
+              <div>
+                <Label>Facebook Page Token</Label>
+                <div className="relative mt-2">
+                  <Input
+                    type={showTokens.fb_page_token ? "text" : "password"}
+                    placeholder="Enter Facebook Page Token"
+                    value={userSettings.fb_page_token}
+                    onChange={(e) => setUserSettings({ ...userSettings, fb_page_token: e.target.value })}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowTokens({ ...showTokens, fb_page_token: !showTokens.fb_page_token })}
+                  >
+                    {showTokens.fb_page_token ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                 </div>
-                <Switch />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Token is masked for security. Only change if needed.
+                </p>
               </div>
               <div>
-                <Label>Response Tone</Label>
-                <select className="w-full mt-2 px-3 py-2 rounded-md border border-input bg-background">
-                  <option>Professional</option>
-                  <option>Friendly</option>
-                  <option>Casual</option>
-                </select>
+                <Label>Instagram Page Token</Label>
+                <div className="relative mt-2">
+                  <Input
+                    type={showTokens.ig_page_token ? "text" : "password"}
+                    placeholder="Enter Instagram Page Token"
+                    value={userSettings.ig_page_token}
+                    onChange={(e) => setUserSettings({ ...userSettings, ig_page_token: e.target.value })}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowTokens({ ...showTokens, ig_page_token: !showTokens.ig_page_token })}
+                  >
+                    {showTokens.ig_page_token ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Token is masked for security. Only change if needed.
+                </p>
               </div>
               <div>
-                <Label>Response Language</Label>
-                <select className="w-full mt-2 px-3 py-2 rounded-md border border-input bg-background">
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                </select>
+                <Label>Instagram Comment Reply Webhook</Label>
+                <Input
+                  placeholder="https://your-webhook.com/ig-comment"
+                  className="mt-2"
+                  value={userSettings.ig_cmnt_reply_webhook}
+                  onChange={(e) => setUserSettings({ ...userSettings, ig_cmnt_reply_webhook: e.target.value })}
+                />
               </div>
-              <Button className="w-full gradient-primary">Save AI Configuration</Button>
+              <div>
+                <Label>Facebook Comment Reply Webhook</Label>
+                <Input
+                  placeholder="https://your-webhook.com/fb-comment"
+                  className="mt-2"
+                  value={userSettings.fb_cmnt_reply_webhook}
+                  onChange={(e) => setUserSettings({ ...userSettings, fb_cmnt_reply_webhook: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Instagram DM Reply Webhook</Label>
+                <Input
+                  placeholder="https://your-webhook.com/ig-dm"
+                  className="mt-2"
+                  value={userSettings.ig_dm_reply_webhook}
+                  onChange={(e) => setUserSettings({ ...userSettings, ig_dm_reply_webhook: e.target.value })}
+                />
+              </div>
+              <Button 
+                className="w-full gradient-primary" 
+                onClick={saveUserSettings}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save Platform Settings"}
+              </Button>
             </div>
           </Card>
         </TabsContent>

@@ -22,5 +22,11 @@ export const useUserRole = () => {
     checkRole();
   }, []);
 
-  return { role, loading, isAdmin: role === 'admin', isModerator: role === 'moderator' };
+  return { 
+    role, 
+    loading, 
+    isAdmin: role === 'admin', 
+    isModerator: role === 'moderator',
+    isSuperAdmin: role === 'superadmin'
+  };
 };
