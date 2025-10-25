@@ -404,6 +404,7 @@ const Comments = () => {
                 </TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Comment</TableHead>
+                <TableHead>Post Link</TableHead>
                 <TableHead>Platform</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Time</TableHead>
@@ -428,6 +429,20 @@ const Comments = () => {
                       <p className="text-xs text-muted-foreground mt-1">
                         AI Reply: {comment.ai_reply.slice(0, 50)}...
                       </p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {comment.post_link ? (
+                      <a 
+                        href={comment.post_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline text-sm"
+                      >
+                        View Post
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">N/A</span>
                     )}
                   </TableCell>
                   <TableCell>
