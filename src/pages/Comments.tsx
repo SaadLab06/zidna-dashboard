@@ -233,7 +233,7 @@ const Comments = () => {
     if (success) {
       await supabase
         .from('comments')
-        .update({ status: 'replied', ai_reply: replyText })
+        .update({ ai_reply: replyText })
         .eq('id', currentComment.id);
       
       toast.success("Reply sent successfully");
@@ -287,14 +287,7 @@ const Comments = () => {
       comments: commentsPayload
     });
 
-    // Only update status if webhook returns success (200)
     if (success) {
-      for (const id of selectedComments) {
-        await supabase
-          .from('comments')
-          .update({ status: 'replied' })
-          .eq('id', id);
-      }
       toast.success("Replies sent successfully");
       setSelectedComments([]);
       fetchComments();
