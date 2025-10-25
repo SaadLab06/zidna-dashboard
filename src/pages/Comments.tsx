@@ -275,14 +275,18 @@ const Comments = () => {
 
   const handleBulkSendReplies = async () => {
     const selectedCommentData = comments.filter(c => selectedComments.includes(c.id));
-    const ids = selectedCommentData.map(c => c.comment_id);
-    const platform = selectedCommentData[0]?.platform;
+    
+    // Build the new payload format
+    const commentsPayload = selectedCommentData.map(comment => ({
+      id: comment.comment_id,
+      platform: comment.platform
+    }));
 
     const success = await callWebhook('comment_reply', {
-      ids,
-      platform
+      comments: commentsPayload
     });
 
+    // Only update status if webhook returns success (200)
     if (success) {
       for (const id of selectedComments) {
         await supabase
