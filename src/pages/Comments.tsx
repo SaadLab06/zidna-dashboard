@@ -276,10 +276,11 @@ const Comments = () => {
   const handleBulkSendReplies = async () => {
     const selectedCommentData = comments.filter(c => selectedComments.includes(c.id));
     
-    // Build the new payload format
+    // Build the new payload format with reply included
     const commentsPayload = selectedCommentData.map(comment => ({
       id: comment.comment_id,
-      platform: comment.platform
+      platform: comment.platform,
+      reply: comment.ai_reply || ""
     }));
 
     const success = await callWebhook('comment_reply', {
