@@ -6,16 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Bot, Bell, Webhook, AlertTriangle, LogOut } from "lucide-react";
+import { Bot, Bell, Webhook, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { validateWebhookForStorage } from "@/lib/webhookValidation";
 import { maskToken, isMaskedToken } from "@/lib/tokenMasking";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff } from "lucide-react";
 const Settings = () => {
-  const navigate = useNavigate();
   const [webhookUrls, setWebhookUrls] = useState({
     commentReply: "",
     dmReply: "",
@@ -123,16 +121,6 @@ const Settings = () => {
       toast.error(error.message || "Failed to save settings");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Failed to log out");
-    } else {
-      toast.success("Logged out successfully");
-      navigate("/auth");
     }
   };
 
@@ -330,22 +318,13 @@ const Settings = () => {
                   onChange={(e) => setUserSettings({ ...userSettings, ig_dm_reply_webhook: e.target.value })}
                 />
               </div>
-              <div className="flex gap-3">
-                <Button 
-                  className="flex-1 gradient-primary" 
-                  onClick={saveUserSettings}
-                  disabled={loading}
-                >
-                  {loading ? "Saving..." : "Save Platform Settings"}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={handleLogout}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </Button>
-              </div>
+              <Button 
+                className="w-full gradient-primary" 
+                onClick={saveUserSettings}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save Platform Settings"}
+              </Button>
             </div>
           </Card>
         </TabsContent>
