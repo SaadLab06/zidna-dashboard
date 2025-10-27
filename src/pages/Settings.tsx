@@ -13,6 +13,13 @@ import { maskToken, isMaskedToken } from "@/lib/tokenMasking";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff } from "lucide-react";
+
+declare global {
+  interface Window {
+    FB: any;
+    fbAsyncInit: () => void;
+  }
+}
 const Settings = () => {
   const [webhookUrls, setWebhookUrls] = useState({
     commentReply: "",
@@ -44,6 +51,18 @@ const Settings = () => {
   useEffect(() => {
     loadWebhooks();
     loadUserSettings();
+    
+    // Check Facebook SDK status
+    const checkFBStatus = setInterval(() => {
+      if (window.FB) {
+        clearInterval(checkFBStatus);
+        window.FB.getLoginStatus((response: any) => {
+          console.log('FB Login Status:', response);
+        });
+      }
+    }, 100);
+    
+    return () => clearInterval(checkFBStatus);
   }, []);
 
   const loadUserSettings = async () => {
@@ -214,6 +233,67 @@ const Settings = () => {
       setLoading(false);
     }
   };
+
+  const handleFacebookLogin = () => {
+    if (!window.FB) {
+      toast.error("Facebook SDK not loaded yet. Please refresh the page.");
+      return;
+    }
+
+    window.FB.login((response: any) => {
+      console.log('Facebook login response:', response);
+      
+      if (response.authResponse) {
+        const accessToken = response.authResponse.accessToken;
+        
+        // Get user's pages
+        window.FB.api('/me/accounts', { access_token: accessToken }, (pagesResponse: any) => {
+          console.log('Pages response:', pagesResponse);
+          
+          if (pagesResponse.data && pagesResponse.data.length > 0) {
+            // For simplicity, using the first page. You can add UI to let user choose.
+            const pageAccessToken = pagesResponse.data[0].access_token;
+            const pageId = pagesResponse.data[0].id;
+            
+            // Get Instagram Business Account connected to this page
+            window.FB.api(
+              `/${pageId}`,
+              { fields: 'instagram_business_account', access_token: pageAccessToken },
+              (igResponse: any) => {
+                console.log('Instagram account response:', igResponse);
+                
+                if (igResponse.instagram_business_account) {
+                  // We have both tokens now
+                  setUserSettings(prev => ({
+                    ...prev,
+                    fb_page_token: pageAccessToken,
+                    ig_page_token: pageAccessToken // Same token works for IG connected to FB page
+                  }));
+                  
+                  toast.success("Connected to Facebook & Instagram successfully!");
+                } else {
+                  // Only Facebook page
+                  setUserSettings(prev => ({
+                    ...prev,
+                    fb_page_token: pageAccessToken
+                  }));
+                  
+                  toast.success("Connected to Facebook successfully! No Instagram account found.");
+                }
+              }
+            );
+          } else {
+            toast.error("No Facebook pages found. Please create a page first.");
+          }
+        });
+      } else {
+        toast.error("Facebook login cancelled or failed");
+      }
+    }, {
+      config_id: '1550441602558892',
+      scope: 'pages_show_list,pages_read_engagement,pages_manage_metadata,instagram_basic,instagram_manage_comments,instagram_manage_messages,pages_messaging'
+    });
+  };
   return <div className="space-y-6 animate-in">
       <div>
         <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
@@ -243,53 +323,75 @@ const Settings = () => {
               </div>
             </div>
             <div className="space-y-6">
-              <div>
-                <Label>Facebook Page Token</Label>
-                <div className="relative mt-2">
-                  <Input
-                    type={showTokens.fb_page_token ? "text" : "password"}
-                    placeholder="Enter Facebook Page Token"
-                    value={userSettings.fb_page_token}
-                    onChange={(e) => setUserSettings({ ...userSettings, fb_page_token: e.target.value })}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowTokens({ ...showTokens, fb_page_token: !showTokens.fb_page_token })}
-                  >
-                    {showTokens.fb_page_token ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Token is masked for security. Only change if needed.
+              {/* OAuth Connection Section */}
+              <div className="p-4 border rounded-lg bg-card/50">
+                <h4 className="font-medium mb-3">Connect Social Media Accounts</h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connect your Facebook and Instagram accounts to automatically retrieve access tokens
                 </p>
+                <Button 
+                  onClick={handleFacebookLogin}
+                  variant="outline"
+                  className="w-full"
+                  type="button"
+                >
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                  Connect Facebook & Instagram
+                </Button>
               </div>
-              <div>
-                <Label>Instagram Page Token</Label>
-                <div className="relative mt-2">
-                  <Input
-                    type={showTokens.ig_page_token ? "text" : "password"}
-                    placeholder="Enter Instagram Page Token"
-                    value={userSettings.ig_page_token}
-                    onChange={(e) => setUserSettings({ ...userSettings, ig_page_token: e.target.value })}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowTokens({ ...showTokens, ig_page_token: !showTokens.ig_page_token })}
-                  >
-                    {showTokens.ig_page_token ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
+
+              {/* Manual Token Entry */}
+              <div className="space-y-4">
+                <div>
+                  <Label>Facebook Page Token</Label>
+                  <div className="relative mt-2">
+                    <Input
+                      type={showTokens.fb_page_token ? "text" : "password"}
+                      placeholder="Enter Facebook Page Token or connect above"
+                      value={userSettings.fb_page_token}
+                      onChange={(e) => setUserSettings({ ...userSettings, fb_page_token: e.target.value })}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowTokens({ ...showTokens, fb_page_token: !showTokens.fb_page_token })}
+                    >
+                      {showTokens.fb_page_token ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Token is masked for security. Only change if needed.
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Token is masked for security. Only change if needed.
-                </p>
+                <div>
+                  <Label>Instagram Page Token</Label>
+                  <div className="relative mt-2">
+                    <Input
+                      type={showTokens.ig_page_token ? "text" : "password"}
+                      placeholder="Enter Instagram Page Token or connect above"
+                      value={userSettings.ig_page_token}
+                      onChange={(e) => setUserSettings({ ...userSettings, ig_page_token: e.target.value })}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowTokens({ ...showTokens, ig_page_token: !showTokens.ig_page_token })}
+                    >
+                      {showTokens.ig_page_token ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Token is masked for security. Only change if needed.
+                  </p>
+                </div>
               </div>
               <div>
                 <Label>Instagram Comment Reply Webhook</Label>
