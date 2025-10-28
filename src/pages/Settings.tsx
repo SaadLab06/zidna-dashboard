@@ -70,30 +70,43 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      // Load Facebook pages
+      const { data: fbPages } = await supabase
+        .from('facebook_pages')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // Load Instagram accounts
+      const { data: igAccounts } = await supabase
+        .from('instagram_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // Load settings for webhooks
+      const { data: settings } = await supabase
         .from('settings')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
+      // Store original tokens and display masked versions
+      setOriginalTokens({
+        fb_page_token: fbPages?.access_token || "",
+        ig_page_token: igAccounts ? fbPages?.access_token || "" : ""
+      });
+      
+      setUserSettings({
+        fb_page_token: maskToken(fbPages?.access_token),
+        ig_page_token: maskToken(igAccounts ? fbPages?.access_token : ""),
+        ig_cmnt_reply_webhook: settings?.ig_cmnt_reply_webhook || "",
+        fb_cmnt_reply_webhook: settings?.fb_cmnt_reply_webhook || "",
+        ig_dm_reply_webhook: settings?.ig_dm_reply_webhook || ""
+      });
 
-      if (data) {
-        // Store original tokens and display masked versions
-        setOriginalTokens({
-          fb_page_token: data.fb_page_token || "",
-          ig_page_token: data.ig_page_token || ""
-        });
-        
-        setUserSettings({
-          fb_page_token: maskToken(data.fb_page_token),
-          ig_page_token: maskToken(data.ig_page_token),
-          ig_cmnt_reply_webhook: data.ig_cmnt_reply_webhook || "",
-          fb_cmnt_reply_webhook: data.fb_cmnt_reply_webhook || "",
-          ig_dm_reply_webhook: data.ig_dm_reply_webhook || ""
-        });
-      } else {
-        // Create default settings for new user
+      // Create default settings if none exist
+      if (!settings) {
         await supabase.from('settings').insert({
           user_id: user.id
         });
@@ -145,9 +158,13 @@ const Settings = () => {
 
   const loadWebhooks = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase
         .from('webhooks_config')
-        .select('name, endpoint');
+        .select('name, endpoint')
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -202,6 +219,9 @@ const Settings = () => {
         takeControl: { name: "take_control", description: "Endpoint to disable AI auto-reply and take manual control" }
       };
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const upsertPromises = Object.entries(webhookUrls).map(([key, url]) => {
         const config = webhookMap[key as keyof typeof webhookMap];
         if (!url) return null; // Skip empty URLs
@@ -209,12 +229,13 @@ const Settings = () => {
         return supabase
           .from('webhooks_config')
           .upsert({
+            user_id: user.id,
             name: config.name,
             endpoint: url,
             description: config.description,
             updated_at: new Date().toISOString()
           }, {
-            onConflict: 'name'
+            onConflict: 'name,user_id'
           });
       });
 
@@ -234,25 +255,63 @@ const Settings = () => {
     }
   };
 
-  const handleFacebookLogin = () => {
+  const handleFacebookLogin = async () => {
     if (!window.FB) {
       toast.error("Facebook SDK not loaded yet. Please refresh the page.");
       return;
     }
 
-    window.FB.login((response: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    window.FB.login(async (response: any) => {
       console.log('Facebook login response:', response);
       
       if (response.authResponse) {
         const accessToken = response.authResponse.accessToken;
         
         // Get user's pages
-        window.FB.api('/me/accounts', { access_token: accessToken }, (pagesResponse: any) => {
+        window.FB.api('/me/accounts', { access_token: accessToken }, async (pagesResponse: any) => {
           console.log('Pages response:', pagesResponse);
           
           if (pagesResponse.data && pagesResponse.data.length > 0) {
-            // For simplicity, using the first page
-            const pageAccessToken = pagesResponse.data[0].access_token;
+            const page = pagesResponse.data[0];
+            const pageAccessToken = page.access_token;
+            const pageId = page.id;
+            const pageName = page.name;
+            
+            // Save to facebook_pages table
+            const { error: fbError } = await supabase
+              .from('facebook_pages')
+              .upsert({
+                user_id: user.id,
+                page_id: pageId,
+                page_name: pageName,
+                access_token: pageAccessToken,
+                is_connected: true
+              }, {
+                onConflict: 'user_id,page_id'
+              });
+
+            if (fbError) {
+              console.error('Error saving Facebook page:', fbError);
+              toast.error("Failed to save Facebook connection");
+              return;
+            }
+
+            // Create social media account record
+            await supabase.from('social_media_accounts').upsert({
+              user_id: user.id,
+              platform: 'facebook',
+              account_name: pageName,
+              account_id: pageId,
+              is_active: true
+            }, {
+              onConflict: 'user_id,platform,account_id'
+            });
             
             setUserSettings(prev => ({
               ...prev,
@@ -260,6 +319,7 @@ const Settings = () => {
             }));
             
             toast.success("Connected to Facebook successfully!");
+            await loadUserSettings();
           } else {
             toast.error("No Facebook pages found. Please create a page first.");
           }
@@ -274,40 +334,100 @@ const Settings = () => {
     });
   };
 
-  const handleInstagramLogin = () => {
+  const handleInstagramLogin = async () => {
     if (!window.FB) {
       toast.error("Facebook SDK not loaded yet. Please refresh the page.");
       return;
     }
 
-    window.FB.login((response: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    window.FB.login(async (response: any) => {
       console.log('Instagram login response:', response);
       
       if (response.authResponse) {
         const accessToken = response.authResponse.accessToken;
         
         // Get user's pages to find Instagram Business Account
-        window.FB.api('/me/accounts', { access_token: accessToken }, (pagesResponse: any) => {
+        window.FB.api('/me/accounts', { access_token: accessToken }, async (pagesResponse: any) => {
           console.log('Pages response:', pagesResponse);
           
           if (pagesResponse.data && pagesResponse.data.length > 0) {
-            const pageAccessToken = pagesResponse.data[0].access_token;
-            const pageId = pagesResponse.data[0].id;
+            const page = pagesResponse.data[0];
+            const pageAccessToken = page.access_token;
+            const pageId = page.id;
+            const pageName = page.name;
             
             // Get Instagram Business Account connected to this page
             window.FB.api(
               `/${pageId}`,
               { fields: 'instagram_business_account', access_token: pageAccessToken },
-              (igResponse: any) => {
+              async (igResponse: any) => {
                 console.log('Instagram account response:', igResponse);
                 
                 if (igResponse.instagram_business_account) {
+                  const igBusinessAccountId = igResponse.instagram_business_account.id;
+
+                  // Save Facebook page first
+                  const { error: fbError } = await supabase
+                    .from('facebook_pages')
+                    .upsert({
+                      user_id: user.id,
+                      page_id: pageId,
+                      page_name: pageName,
+                      access_token: pageAccessToken,
+                      instagram_business_account_id: igBusinessAccountId,
+                      is_connected: true
+                    }, {
+                      onConflict: 'user_id,page_id'
+                    });
+
+                  if (fbError) {
+                    console.error('Error saving Facebook page:', fbError);
+                    toast.error("Failed to save Instagram connection");
+                    return;
+                  }
+
+                  // Get the facebook_page record to link
+                  const { data: fbPage } = await supabase
+                    .from('facebook_pages')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .eq('page_id', pageId)
+                    .single();
+
+                  // Save Instagram account
+                  await supabase.from('instagram_accounts').upsert({
+                    user_id: user.id,
+                    facebook_page_id: fbPage?.id,
+                    instagram_account_id: igBusinessAccountId,
+                    is_connected: true
+                  }, {
+                    onConflict: 'user_id,instagram_account_id'
+                  });
+
+                  // Create social media account record
+                  await supabase.from('social_media_accounts').upsert({
+                    user_id: user.id,
+                    platform: 'instagram',
+                    account_name: pageName,
+                    account_id: igBusinessAccountId,
+                    is_active: true
+                  }, {
+                    onConflict: 'user_id,platform,account_id'
+                  });
+                  
                   setUserSettings(prev => ({
                     ...prev,
                     ig_page_token: pageAccessToken
                   }));
                   
                   toast.success("Connected to Instagram successfully!");
+                  await loadUserSettings();
                 } else {
                   toast.error("No Instagram Business Account found. Please connect an Instagram Business Account to your Facebook page.");
                 }

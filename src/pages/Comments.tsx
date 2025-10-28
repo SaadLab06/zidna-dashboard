@@ -79,7 +79,17 @@ const Comments = () => {
 
   const fetchComments = async () => {
     setLoading(true);
-    let query = supabase.from('comments').select('*').order('created_at', { ascending: false });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    let query = supabase
+      .from('comments')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
     if (platformFilter !== 'all') {
       query = query.eq('platform', platformFilter);

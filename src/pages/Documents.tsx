@@ -22,9 +22,16 @@ const Documents = () => {
 
   const fetchDocuments = async () => {
     setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     let query = supabase
       .from('ai_documents')
       .select('*')
+      .eq('user_id', user.id)
       .order('uploaded_at', { ascending: false });
 
     if (searchTerm) {

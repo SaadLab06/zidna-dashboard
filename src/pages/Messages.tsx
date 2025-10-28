@@ -83,9 +83,13 @@ const Messages = () => {
   }, [selectedThread]);
 
   const fetchThreads = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     let query = supabase
       .from('threads')
       .select('*')
+      .eq('user_id', user.id)
       .order('last_message_time', { ascending: false });
 
     if (searchTerm) {
@@ -104,10 +108,14 @@ const Messages = () => {
   };
 
   const fetchMessages = async (threadId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data, error } = await supabase
       .from('messages')
       .select('*')
       .eq('thread_id', threadId)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: true });
 
     if (!error && data) {
