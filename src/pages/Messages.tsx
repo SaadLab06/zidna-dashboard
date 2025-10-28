@@ -87,7 +87,7 @@ const Messages = () => {
     if (!user) return;
 
     let query = supabase
-      .from('threads')
+      .from('threads' as any)
       .select('*')
       .eq('user_id', user.id)
       .order('last_message_time', { ascending: false });
@@ -112,7 +112,7 @@ const Messages = () => {
     if (!user) return;
 
     const { data, error } = await supabase
-      .from('messages')
+      .from('messages' as any)
       .select('*')
       .eq('thread_id', threadId)
       .eq('user_id', user.id)

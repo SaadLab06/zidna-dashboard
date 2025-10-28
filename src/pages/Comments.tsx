@@ -86,7 +86,7 @@ const Comments = () => {
     }
 
     let query = supabase
-      .from('comments')
+      .from('comments' as any)
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });

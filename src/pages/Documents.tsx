@@ -29,7 +29,7 @@ const Documents = () => {
     }
 
     let query = supabase
-      .from('ai_documents')
+      .from('ai_documents' as any)
       .select('*')
       .eq('user_id', user.id)
       .order('uploaded_at', { ascending: false });

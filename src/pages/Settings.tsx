@@ -72,14 +72,14 @@ const Settings = () => {
 
       // Load Facebook pages
       const { data: fbPages } = await supabase
-        .from('facebook_pages')
+        .from('facebook_pages' as any)
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
       // Load Instagram accounts
       const { data: igAccounts } = await supabase
-        .from('instagram_accounts')
+        .from('instagram_accounts' as any)
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -92,14 +92,17 @@ const Settings = () => {
         .maybeSingle();
 
       // Store original tokens and display masked versions
+      const fbPageData = fbPages as any;
+      const igAccountData = igAccounts as any;
+      
       setOriginalTokens({
-        fb_page_token: fbPages?.access_token || "",
-        ig_page_token: igAccounts ? fbPages?.access_token || "" : ""
+        fb_page_token: fbPageData?.access_token || "",
+        ig_page_token: igAccountData ? fbPageData?.access_token || "" : ""
       });
       
       setUserSettings({
-        fb_page_token: maskToken(fbPages?.access_token),
-        ig_page_token: maskToken(igAccounts ? fbPages?.access_token : ""),
+        fb_page_token: maskToken(fbPageData?.access_token),
+        ig_page_token: maskToken(igAccountData ? fbPageData?.access_token : ""),
         ig_cmnt_reply_webhook: settings?.ig_cmnt_reply_webhook || "",
         fb_cmnt_reply_webhook: settings?.fb_cmnt_reply_webhook || "",
         ig_dm_reply_webhook: settings?.ig_dm_reply_webhook || ""
@@ -162,7 +165,7 @@ const Settings = () => {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('webhooks_config')
+        .from('webhooks_config' as any)
         .select('name, endpoint')
         .eq('user_id', user.id);
 
@@ -180,7 +183,7 @@ const Settings = () => {
         };
 
         const loadedWebhooks = { ...webhookUrls };
-        data.forEach((webhook) => {
+        (data as any[]).forEach((webhook: any) => {
           const key = webhookMap[webhook.name];
           if (key) {
             loadedWebhooks[key as keyof typeof loadedWebhooks] = webhook.endpoint || "";
@@ -285,7 +288,7 @@ const Settings = () => {
             
             // Save to facebook_pages table
             const { error: fbError } = await supabase
-              .from('facebook_pages')
+              .from('facebook_pages' as any)
               .upsert({
                 user_id: user.id,
                 page_id: pageId,
@@ -303,7 +306,7 @@ const Settings = () => {
             }
 
             // Create social media account record
-            await supabase.from('social_media_accounts').upsert({
+            await supabase.from('social_media_accounts' as any).upsert({
               user_id: user.id,
               platform: 'facebook',
               account_name: pageName,
@@ -374,7 +377,7 @@ const Settings = () => {
 
                   // Save Facebook page first
                   const { error: fbError } = await supabase
-                    .from('facebook_pages')
+                    .from('facebook_pages' as any)
                     .upsert({
                       user_id: user.id,
                       page_id: pageId,
@@ -394,16 +397,16 @@ const Settings = () => {
 
                   // Get the facebook_page record to link
                   const { data: fbPage } = await supabase
-                    .from('facebook_pages')
+                    .from('facebook_pages' as any)
                     .select('id')
                     .eq('user_id', user.id)
                     .eq('page_id', pageId)
                     .single();
 
                   // Save Instagram account
-                  await supabase.from('instagram_accounts').upsert({
+                  await supabase.from('instagram_accounts' as any).upsert({
                     user_id: user.id,
-                    facebook_page_id: fbPage?.id,
+                    facebook_page_id: (fbPage as any)?.id,
                     instagram_account_id: igBusinessAccountId,
                     is_connected: true
                   }, {
@@ -411,7 +414,7 @@ const Settings = () => {
                   });
 
                   // Create social media account record
-                  await supabase.from('social_media_accounts').upsert({
+                  await supabase.from('social_media_accounts' as any).upsert({
                     user_id: user.id,
                     platform: 'instagram',
                     account_name: pageName,
