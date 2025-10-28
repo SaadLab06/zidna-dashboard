@@ -16,7 +16,9 @@ const Layout = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState<string>("");
-  const { isSuperAdmin } = useUserRole();
+  const [userRole, setUserRole] = useState<string>("user");
+  const { isSuperAdmin, isAdmin, isModerator } = useUserRole();
+  
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -26,6 +28,17 @@ const Layout = ({
       } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email || "");
+        
+        // Get user's role
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (roleData) {
+          setUserRole(roleData.role);
+        }
       }
     };
     getUser();
@@ -102,7 +115,25 @@ const Layout = ({
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         {/* Top Navbar */}
-        <div className="h-16 border-b border-border bg-card flex items-center justify-end px-6">
+        <div className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">Logged in as:</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{userEmail}</span>
+              {userRole && (
+                <span className={cn(
+                  "text-xs px-2 py-1 rounded-full font-medium",
+                  userRole === 'superadmin' && "bg-destructive/10 text-destructive border border-destructive/20",
+                  userRole === 'admin' && "bg-warning/10 text-warning border border-warning/20",
+                  userRole === 'moderator' && "bg-blue-500/10 text-blue-600 border border-blue-500/20",
+                  userRole === 'user' && "bg-muted text-muted-foreground border border-border"
+                )}>
+                  {userRole}
+                </span>
+              )}
+            </div>
+          </div>
+          
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Avatar className="cursor-pointer">
@@ -112,7 +143,14 @@ const Layout = ({
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>{userEmail}</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <div className="flex flex-col gap-1">
+                  <span>{userEmail}</span>
+                  <span className="text-xs font-normal text-muted-foreground capitalize">
+                    Role: {userRole}
+                  </span>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />

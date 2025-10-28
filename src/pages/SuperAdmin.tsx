@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { UserManagementTab } from "@/components/superadmin/UserManagementTab";
 import { RoleManagementTab } from "@/components/superadmin/RoleManagementTab";
 import { AuditLogTab } from "@/components/superadmin/AuditLogTab";
-import { Shield, Users, ScrollText } from "lucide-react";
+import { AccountsManagementTab } from "@/components/superadmin/AccountsManagementTab";
+import { Shield, Users, ScrollText, UserCog } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -47,21 +48,29 @@ const SuperAdmin = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="accounts" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="accounts">
+            <UserCog className="h-4 w-4 mr-2" />
+            Accounts
+          </TabsTrigger>
           <TabsTrigger value="users">
             <Users className="h-4 w-4 mr-2" />
-            Users
+            User Roles
           </TabsTrigger>
           <TabsTrigger value="roles">
             <Shield className="h-4 w-4 mr-2" />
-            Roles
+            Role Management
           </TabsTrigger>
           <TabsTrigger value="audit">
             <ScrollText className="h-4 w-4 mr-2" />
             Audit Log
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="accounts">
+          <AccountsManagementTab />
+        </TabsContent>
 
         <TabsContent value="users">
           <UserManagementTab />

@@ -28,11 +28,24 @@ const Documents = () => {
       return;
     }
 
+    // Check if user is superadmin
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    const isSuperAdmin = roleData?.role === 'superadmin';
+
     let query = supabase
       .from('ai_documents' as any)
       .select('*')
-      .eq('user_id', user.id)
       .order('uploaded_at', { ascending: false });
+
+    // Only filter by user_id if NOT superadmin
+    if (!isSuperAdmin) {
+      query = query.eq('user_id', user.id);
+    }
 
     if (searchTerm) {
       const validation = validateSearch(searchTerm);

@@ -86,11 +86,24 @@ const Messages = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Check if user is superadmin
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    const isSuperAdmin = roleData?.role === 'superadmin';
+
     let query = supabase
       .from('threads' as any)
       .select('*')
-      .eq('user_id', user.id)
       .order('last_message_time', { ascending: false });
+
+    // Only filter by user_id if NOT superadmin
+    if (!isSuperAdmin) {
+      query = query.eq('user_id', user.id);
+    }
 
     if (searchTerm) {
       const validation = validateSearch(searchTerm);
@@ -111,12 +124,27 @@ const Messages = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data, error } = await supabase
+    // Check if user is superadmin
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    const isSuperAdmin = roleData?.role === 'superadmin';
+
+    let query = supabase
       .from('messages' as any)
       .select('*')
       .eq('thread_id', threadId)
-      .eq('user_id', user.id)
       .order('created_at', { ascending: true });
+
+    // Only filter by user_id if NOT superadmin
+    if (!isSuperAdmin) {
+      query = query.eq('user_id', user.id);
+    }
+
+    const { data, error } = await query;
 
     if (!error && data) {
       setMessages(data);

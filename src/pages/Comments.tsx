@@ -85,11 +85,24 @@ const Comments = () => {
       return;
     }
 
+    // Check if user is superadmin
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    const isSuperAdmin = roleData?.role === 'superadmin';
+
     let query = supabase
       .from('comments' as any)
       .select('*')
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
+
+    // Only filter by user_id if NOT superadmin
+    if (!isSuperAdmin) {
+      query = query.eq('user_id', user.id);
+    }
 
     if (platformFilter !== 'all') {
       query = query.eq('platform', platformFilter);
