@@ -21,11 +21,45 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Listen for auth state changes to call webhook after email verification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth event:', event);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Check if this is a new user by checking if they just verified their email
+          const createdAt = new Date(session.user.created_at);
+          const now = new Date();
+          const diffMinutes = (now.getTime() - createdAt.getTime()) / 1000 / 60;
+          
+          // If user was created within the last 5 minutes, call webhook
+          if (diffMinutes < 5) {
+            console.log('New user detected, calling webhook...');
+            try {
+              const result = await supabase.functions.invoke('notify-new-user', {
+                body: {
+                  user_id: session.user.id,
+                  email: session.user.email
+                }
+              });
+              console.log('Webhook result:', result);
+            } catch (webhookError) {
+              console.error('Failed to notify webhook:', webhookError);
+            }
+          }
+          
+          navigate("/");
+        }
+      }
+    );
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/");
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -61,7 +95,7 @@ const Auth = () => {
           email: validation.data.email,
           password: validation.data.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`
+            emailRedirectTo: `${window.location.origin}/auth`
           }
         });
 
@@ -73,21 +107,7 @@ const Auth = () => {
           }
         } else {
           toast.success("Account created! Please check your email to confirm.");
-          
-          // Notify n8n webhook about new user
-          if (data.user) {
-            try {
-              await supabase.functions.invoke('notify-new-user', {
-                body: {
-                  user_id: data.user.id,
-                  email: data.user.email
-                }
-              });
-            } catch (webhookError) {
-              console.error('Failed to notify webhook:', webhookError);
-              // Don't show error to user, just log it
-            }
-          }
+          // Webhook will be called automatically after email verification
         }
       }
     } catch (error) {
