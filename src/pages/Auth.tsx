@@ -57,7 +57,7 @@ const Auth = () => {
           navigate("/");
         }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: validation.data.email,
           password: validation.data.password,
           options: {
@@ -73,6 +73,21 @@ const Auth = () => {
           }
         } else {
           toast.success("Account created! Please check your email to confirm.");
+          
+          // Notify n8n webhook about new user
+          if (data.user) {
+            try {
+              await supabase.functions.invoke('notify-new-user', {
+                body: {
+                  user_id: data.user.id,
+                  email: data.user.email
+                }
+              });
+            } catch (webhookError) {
+              console.error('Failed to notify webhook:', webhookError);
+              // Don't show error to user, just log it
+            }
+          }
         }
       }
     } catch (error) {
