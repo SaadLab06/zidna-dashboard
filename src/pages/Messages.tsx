@@ -100,9 +100,9 @@ const Messages = () => {
       .select('*')
       .order('last_message_time', { ascending: false });
 
-    // Only filter by user_id if NOT superadmin
+    // Only filter by owner_id if NOT superadmin
     if (!isSuperAdmin) {
-      query = query.eq('user_id', user.id);
+      query = query.eq('owner_id', user.id);
     }
 
     if (searchTerm) {
@@ -139,9 +139,9 @@ const Messages = () => {
       .eq('thread_id', threadId)
       .order('created_at', { ascending: true });
 
-    // Only filter by user_id if NOT superadmin
+    // Only filter by owner_id if NOT superadmin
     if (!isSuperAdmin) {
-      query = query.eq('user_id', user.id);
+      query = query.eq('owner_id', user.id);
     }
 
     const { data, error } = await query;
@@ -474,6 +474,7 @@ const Messages = () => {
                           
                         // Only save to database if webhook call was successful
                         if (webhookResponse.ok) {
+                          const { data: { user } } = await supabase.auth.getUser();
                           const { error } = await supabase
                             .from('messages')
                             .insert({
@@ -483,7 +484,8 @@ const Messages = () => {
                               direction: 'out',
                               sender_name: 'Admin',
                               sender_id: lastIncomingMessage.recipient_id,
-                              recipient_id: lastIncomingMessage.sender_id
+                              recipient_id: lastIncomingMessage.sender_id,
+                              owner_id: user?.id
                             });
                             
                             if (error) {
@@ -571,6 +573,7 @@ const Messages = () => {
                         
                         // Only save to database if webhook call was successful
                         if (webhookResponse.ok) {
+                          const { data: { user } } = await supabase.auth.getUser();
                           const { error } = await supabase
                             .from('messages')
                             .insert({
@@ -580,7 +583,8 @@ const Messages = () => {
                               direction: 'out',
                               sender_name: 'Admin',
                               sender_id: lastIncomingMessage.recipient_id,
-                              recipient_id: lastIncomingMessage.sender_id
+                              recipient_id: lastIncomingMessage.sender_id,
+                              owner_id: user?.id
                             });
                           
                           if (error) {

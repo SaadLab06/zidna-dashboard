@@ -51,6 +51,7 @@ export type Database = {
           file_url: string | null
           id: string
           name: string
+          owner_id: string | null
           size: string | null
           status: string | null
           tags: string[] | null
@@ -62,6 +63,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           name: string
+          owner_id?: string | null
           size?: string | null
           status?: string | null
           tags?: string[] | null
@@ -73,6 +75,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           name?: string
+          owner_id?: string | null
           size?: string | null
           status?: string | null
           tags?: string[] | null
@@ -119,6 +122,7 @@ export type Database = {
           created_at: string | null
           id: string
           message: string | null
+          owner_id: string | null
           platform: string
           post_link: string | null
           status: string | null
@@ -132,6 +136,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           message?: string | null
+          owner_id?: string | null
           platform: string
           post_link?: string | null
           status?: string | null
@@ -145,6 +150,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           message?: string | null
+          owner_id?: string | null
           platform?: string
           post_link?: string | null
           status?: string | null
@@ -200,6 +206,7 @@ export type Database = {
           direction: string | null
           id: string
           message: string | null
+          owner_id: string | null
           platform: string
           recipient_id: string | null
           sender_id: string | null
@@ -212,6 +219,7 @@ export type Database = {
           direction?: string | null
           id?: string
           message?: string | null
+          owner_id?: string | null
           platform: string
           recipient_id?: string | null
           sender_id?: string | null
@@ -224,6 +232,7 @@ export type Database = {
           direction?: string | null
           id?: string
           message?: string | null
+          owner_id?: string | null
           platform?: string
           recipient_id?: string | null
           sender_id?: string | null
@@ -283,6 +292,7 @@ export type Database = {
           id: string
           last_message: string | null
           last_message_time: string | null
+          owner_id: string | null
           platform: string
           thread_id: string | null
           unread_count: number | null
@@ -294,6 +304,7 @@ export type Database = {
           id?: string
           last_message?: string | null
           last_message_time?: string | null
+          owner_id?: string | null
           platform: string
           thread_id?: string | null
           unread_count?: number | null
@@ -305,6 +316,7 @@ export type Database = {
           id?: string
           last_message?: string | null
           last_message_time?: string | null
+          owner_id?: string | null
           platform?: string
           thread_id?: string | null
           unread_count?: number | null

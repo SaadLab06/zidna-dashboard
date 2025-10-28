@@ -99,9 +99,9 @@ const Comments = () => {
       .select('*')
       .order('created_at', { ascending: false });
 
-    // Only filter by user_id if NOT superadmin
+    // Only filter by owner_id if NOT superadmin
     if (!isSuperAdmin) {
-      query = query.eq('user_id', user.id);
+      query = query.eq('owner_id', user.id);
     }
 
     if (platformFilter !== 'all') {
