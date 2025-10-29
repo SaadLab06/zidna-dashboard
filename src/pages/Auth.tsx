@@ -48,6 +48,18 @@ const Auth = () => {
               console.error('Failed to notify webhook:', webhookError);
             }
           }
+
+          // Defer logging user activity to avoid deadlocks in the auth callback
+          setTimeout(() => {
+            (async () => {
+              const { error: uaError } = await supabase.from('user_activity').insert({
+                user_id: session.user!.id,
+                event: 'signed_in',
+                meta: { method: (session.user as any)?.app_metadata?.provider || 'email' }
+              });
+              if (uaError) console.error('user_activity insert error', uaError);
+            })();
+          }, 0);
           
           navigate("/");
         }

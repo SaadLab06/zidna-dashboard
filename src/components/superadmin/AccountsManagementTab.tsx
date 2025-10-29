@@ -42,10 +42,11 @@ export const AccountsManagementTab = () => {
       // Get all user roles
       const { data: rolesData } = await supabase
         .from('user_roles')
-        .select('user_id, role');
+        .select('user_id, role, created_at');
       
-      // Create a map of user_id to role
+      // Create a map of user_id to role and role-created time
       const rolesMap = new Map(rolesData?.map(r => [r.user_id, r.role]) || []);
+      const roleCreatedAtMap = new Map(rolesData?.map(r => [r.user_id, r.created_at]) || []);
       
       // Get user activity to find all user IDs and get some info
       const { data: activityData } = await supabase
@@ -53,16 +54,18 @@ export const AccountsManagementTab = () => {
         .select('user_id, created_at')
         .order('created_at', { ascending: false });
       
-      // Get unique user IDs from activity
-      const uniqueUserIds = [...new Set(activityData?.map(a => a.user_id) || [])];
+      // Build a unique set of user IDs from both activity and roles
+      const activityIds = (activityData?.map(a => a.user_id).filter(Boolean) as string[]) || [];
+      const roleIds = (rolesData?.map(r => r.user_id).filter(Boolean) as string[]) || [];
+      const uniqueUserIds = Array.from(new Set([...(activityIds || []), ...(roleIds || [])]));
       
-      // For now, we'll show user IDs. In production, you'd use an edge function to get emails from auth.users
+      // For email we show a placeholder; use an edge function if you want real emails from auth.users
       const accountsList: UserAccount[] = uniqueUserIds.map(userId => {
         const firstActivity = activityData?.find(a => a.user_id === userId);
         return {
           id: userId || '',
-          email: `User ${userId?.substring(0, 8)}...`, // Placeholder - would need edge function for real emails
-          created_at: firstActivity?.created_at || new Date().toISOString(),
+          email: `User ${userId?.substring(0, 8)}...`, // Placeholder – replace via edge function for real emails
+          created_at: firstActivity?.created_at || roleCreatedAtMap.get(userId) || new Date().toISOString(),
           role: rolesMap.get(userId!) || 'user'
         };
       });
