@@ -105,12 +105,14 @@ const Documents = () => {
 
     setUploading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const file = files[0];
       const formData = new FormData();
       formData.append('file', file);
       formData.append('name', file.name);
       formData.append('file_type', file.type);
       formData.append('size', file.size.toString());
+      formData.append('owner_id', user?.id || '');
 
       const response = await fetch(webhookConfig.endpoint, {
         method: 'POST',
@@ -150,6 +152,7 @@ const Documents = () => {
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const response = await fetch(webhookConfig.endpoint, {
         method: 'POST',
         headers: {
@@ -157,7 +160,8 @@ const Documents = () => {
         },
         body: JSON.stringify({
           file_url: doc.file_url,
-          document_id: doc.id
+          document_id: doc.id,
+          owner_id: user?.id
         }),
       });
 

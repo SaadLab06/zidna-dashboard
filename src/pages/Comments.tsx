@@ -204,9 +204,11 @@ const Comments = () => {
     const comment = comments.find(c => c.id === id);
     if (!comment) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('delete_comment', {
       comment_id: comment.comment_id,
-      platform: comment.platform
+      platform: comment.platform,
+      owner_id: user?.id
     });
 
     if (success) {
@@ -223,9 +225,11 @@ const Comments = () => {
     const ids = selectedCommentData.map(c => c.comment_id);
     const platform = selectedCommentData[0]?.platform;
 
+    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('delete_comment', {
       ids,
-      platform
+      platform,
+      owner_id: user?.id
     });
 
     if (success) {
@@ -247,10 +251,12 @@ const Comments = () => {
   const handleConfirmReply = async () => {
     if (!currentComment || !replyText.trim()) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('comment_reply', {
       comment_id: currentComment.comment_id,
       reply_text: replyText,
-      platform: currentComment.platform
+      platform: currentComment.platform,
+      owner_id: user?.id
     });
 
     if (success) {
@@ -276,10 +282,12 @@ const Comments = () => {
   const handleConfirmEdit = async () => {
     if (!currentComment || !replyText.trim()) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('comment_reply', {
       comment_id: currentComment.comment_id,
       reply_text: replyText,
-      platform: currentComment.platform
+      platform: currentComment.platform,
+      owner_id: user?.id
     });
 
     if (success) {
@@ -306,8 +314,10 @@ const Comments = () => {
       reply: comment.ai_reply || ""
     }));
 
+    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('comment_reply', {
-      comments: commentsPayload
+      comments: commentsPayload,
+      owner_id: user?.id
     });
 
     if (success) {

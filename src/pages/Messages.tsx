@@ -307,6 +307,7 @@ const Messages = () => {
                           if (webhooks?.endpoint) {
                             console.log('Calling webhook:', webhooks.endpoint);
                             try {
+                              const { data: { user } } = await supabase.auth.getUser();
                               const response = await fetch(webhooks.endpoint, {
                                 method: 'POST',
                                 headers: {
@@ -314,7 +315,8 @@ const Messages = () => {
                                 },
                                 body: JSON.stringify({
                                   thread_id: selectedThread.thread_id,
-                                  ai_control: checked
+                                  ai_control: checked,
+                                  owner_id: user?.id
                                 }),
                               });
                               console.log('Webhook response:', response.status);
@@ -460,6 +462,7 @@ const Messages = () => {
                         
                         try {
                           // First, make the webhook call
+                          const { data: { user } } = await supabase.auth.getUser();
                           const webhookResponse = await fetch(webhooks.endpoint, {
                             method: 'POST',
                             headers: {
@@ -468,7 +471,8 @@ const Messages = () => {
                             body: JSON.stringify({
                               recipient_id: lastIncomingMessage.recipient_id,
                               sender_id: lastIncomingMessage.sender_id,
-                              ai_dm_reply: messageText
+                              ai_dm_reply: messageText,
+                              owner_id: user?.id
                             }),
                           });
                           
@@ -559,6 +563,7 @@ const Messages = () => {
                       
                       try {
                         // First, make the webhook call
+                        const { data: { user } } = await supabase.auth.getUser();
                         const webhookResponse = await fetch(webhooks.endpoint, {
                           method: 'POST',
                           headers: {
@@ -567,7 +572,8 @@ const Messages = () => {
                           body: JSON.stringify({
                             recipient_id: lastIncomingMessage.recipient_id,
                             sender_id: lastIncomingMessage.sender_id,
-                            ai_dm_reply: messageText
+                            ai_dm_reply: messageText,
+                            owner_id: user?.id
                           }),
                         });
                         
