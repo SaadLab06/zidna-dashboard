@@ -31,6 +31,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         email: payload.email,
         id: payload.user_id,
+        owner_id: payload.user_id,
         timestamp: new Date().toISOString(),
       }),
     })
