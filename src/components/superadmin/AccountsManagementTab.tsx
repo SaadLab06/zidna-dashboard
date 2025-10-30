@@ -38,47 +38,49 @@ export const AccountsManagementTab = () => {
   const loadAccounts = async () => {
     try {
       setLoading(true);
-      
-      // Get all user roles
+
+      // Fetch roles for all users
       const { data: rolesData } = await supabase
         .from('user_roles')
         .select('user_id, role, created_at');
-      
-      // Create a map of user_id to role and role-created time
-      const rolesMap = new Map(rolesData?.map(r => [r.user_id, r.role]) || []);
-      const roleCreatedAtMap = new Map(rolesData?.map(r => [r.user_id, r.created_at]) || []);
-      
-      // Get user activity to find all user IDs and get some info
-      const { data: activityData } = await supabase
-        .from('user_activity')
-        .select('user_id, created_at')
-        .order('created_at', { ascending: false });
-      
-      // Build a unique set of user IDs from both activity and roles
-      const activityIds = (activityData?.map(a => a.user_id).filter(Boolean) as string[]) || [];
-      const roleIds = (rolesData?.map(r => r.user_id).filter(Boolean) as string[]) || [];
-      const uniqueUserIds = Array.from(new Set([...(activityIds || []), ...(roleIds || [])]));
-      
-      // For email we show a placeholder; use an edge function if you want real emails from auth.users
-      const accountsList: UserAccount[] = uniqueUserIds.map(userId => {
-        const firstActivity = activityData?.find(a => a.user_id === userId);
-        return {
-          id: userId || '',
-          email: `User ${userId?.substring(0, 8)}...`, // Placeholder – replace via edge function for real emails
-          created_at: firstActivity?.created_at || roleCreatedAtMap.get(userId) || new Date().toISOString(),
-          role: rolesMap.get(userId!) || 'user'
-        };
-      });
-      
+
+      const rolesMap = new Map(rolesData?.map((r) => [r.user_id, r.role]) || []);
+
+      // Call edge function (superadmin-only) to get real emails from auth.users
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      const res = await fetch(
+        'https://hcbpypaasoibqnhbxkqs.functions.supabase.co/admin-list-users',
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        console.error('admin-list-users failed', await res.text());
+        throw new Error('Failed to load users');
+      }
+
+      const { users } = await res.json();
+
+      const accountsList: UserAccount[] = (users || []).map((u: any) => ({
+        id: u.id,
+        email: u.email || 'Unknown',
+        created_at: u.created_at,
+        role: rolesMap.get(u.id) || 'user',
+      }));
+
       setAccounts(accountsList);
     } catch (error: any) {
       console.error('Error loading accounts:', error);
-      toast.error(error.message || "Failed to load accounts");
+      toast.error(error.message || 'Failed to load accounts');
     } finally {
       setLoading(false);
     }
   };
-
   const filteredAccounts = accounts.filter(account =>
     account.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     account.id.toLowerCase().includes(searchQuery.toLowerCase())
