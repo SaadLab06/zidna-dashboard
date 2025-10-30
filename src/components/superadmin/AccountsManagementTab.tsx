@@ -47,24 +47,16 @@ export const AccountsManagementTab = () => {
       const rolesMap = new Map(rolesData?.map((r) => [r.user_id, r.role]) || []);
 
       // Call edge function (superadmin-only) to get real emails from auth.users
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
+      const { data: fnRes, error: fnErr } = await supabase.functions.invoke('admin-list-users', {
+        body: { search: searchQuery || '' },
+      });
 
-      const res = await fetch(
-        'https://hcbpypaasoibqnhbxkqs.functions.supabase.co/admin-list-users',
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        console.error('admin-list-users failed', await res.text());
+      if (fnErr) {
+        console.error('admin-list-users failed', fnErr);
         throw new Error('Failed to load users');
       }
 
-      const { users } = await res.json();
+      const { users } = (fnRes as any) || { users: [] };
 
       const accountsList: UserAccount[] = (users || []).map((u: any) => ({
         id: u.id,

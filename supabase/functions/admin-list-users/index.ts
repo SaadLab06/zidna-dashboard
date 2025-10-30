@@ -17,9 +17,7 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') as string
     const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
 
-    const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
-    })
+    const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
     // Authenticate requester
     const authHeader = req.headers.get('Authorization') || ''
