@@ -82,18 +82,18 @@ export const AccountsManagementTab = () => {
     if (!selectedAccount) return;
     
     try {
-      // Delete user's role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', selectedAccount.id);
-      
-      if (roleError) throw roleError;
+      // Call edge function to delete user from auth.users
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId: selectedAccount.id }
+      });
 
-      // Note: Deleting from auth.users requires admin API or edge function
-      // For now, we're just removing the role
+      if (error) throw error;
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
       
-      toast.success("User role removed successfully");
+      toast.success("User account deleted successfully");
       setDeleteDialogOpen(false);
       setSelectedAccount(null);
       loadAccounts();
@@ -256,7 +256,7 @@ export const AccountsManagementTab = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the user's role. This action cannot be undone.
+              This will permanently delete the user account and all associated data. This action cannot be undone.
               <br /><br />
               <strong>User:</strong> {selectedAccount?.email}
             </AlertDialogDescription>
