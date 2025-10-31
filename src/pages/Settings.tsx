@@ -4,7 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Link2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bell, Link2, User, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,9 +24,18 @@ const Settings = () => {
     instagram: false,
     tiktok: false
   });
+  
+  // Profile states
+  const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     loadConnectedAccounts();
+    loadProfile();
     
     // Check Facebook SDK status
     const checkFBStatus = setInterval(() => {
@@ -39,6 +49,27 @@ const Settings = () => {
     
     return () => clearInterval(checkFBStatus);
   }, []);
+
+  const loadProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile) {
+        setFullName(profile.full_name || "");
+        setPhoneNumber(profile.phone_number || "");
+        setDateOfBirth(profile.date_of_birth || "");
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
 
   const loadConnectedAccounts = async () => {
     try {
@@ -262,6 +293,64 @@ const Settings = () => {
     });
   };
 
+  const handleUpdateProfile = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          phone_number: phoneNumber,
+          date_of_birth: dateOfBirth
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast.success("Profile updated successfully!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast.success("Password changed successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to change password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in">
       <div>
@@ -269,12 +358,113 @@ const Settings = () => {
         <p className="text-muted-foreground mt-2">Configure your preferences</p>
       </div>
 
-      <Tabs defaultValue="social" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="social">Social Media</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="profile" className="space-y-6">
+          {/* Personal Information */}
+          <Card className="p-6 border-0 shadow-lg">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="h-12 w-12 rounded-lg bg-gradient-primary flex items-center justify-center">
+                <User className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Personal Information</h3>
+                <p className="text-sm text-muted-foreground">Update your personal details</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="Enter your phone number"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                />
+              </div>
+
+              <Button 
+                onClick={handleUpdateProfile} 
+                disabled={loading}
+                className="w-full"
+              >
+                {loading ? "Updating..." : "Update Profile"}
+              </Button>
+            </div>
+          </Card>
+
+          {/* Password Change */}
+          <Card className="p-6 border-0 shadow-lg">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="h-12 w-12 rounded-lg bg-warning/10 flex items-center justify-center">
+                <Lock className="h-6 w-6 text-warning" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Change Password</h3>
+                <p className="text-sm text-muted-foreground">Update your account password</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                />
+              </div>
+
+              <Button 
+                onClick={handleChangePassword} 
+                disabled={loading}
+                className="w-full"
+              >
+                {loading ? "Changing..." : "Change Password"}
+              </Button>
+            </div>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="social" className="space-y-6">
           <Card className="p-6 border-0 shadow-lg">
