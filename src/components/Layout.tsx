@@ -101,14 +101,16 @@ const Layout = ({
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar collapsible="icon">
           <SidebarContent>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold text-slate-50 sidebar-group-content:hidden">
-                Zidna Social Hub
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1 sidebar-group-content:hidden">
-                Manage your social presence
-              </p>
-            </div>
+            <SidebarGroup>
+              <div className="p-6 group-data-[collapsible=icon]:hidden">
+                <h1 className="text-2xl font-bold text-slate-50">
+                  Zidna Social Hub
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Manage your social presence
+                </p>
+              </div>
+            </SidebarGroup>
             
             <SidebarGroup>
               <SidebarGroupContent>
