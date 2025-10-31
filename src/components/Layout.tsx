@@ -7,6 +7,18 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarMenu, 
+  SidebarMenuButton, 
+  SidebarMenuItem, 
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar
+} from "@/components/ui/sidebar";
 interface LayoutProps {
   children: ReactNode;
 }
@@ -84,86 +96,105 @@ const Layout = ({
         path: "/superadmin"
       }]
     : navItems;
-  return <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-slate-50">Zidna Social Hub</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your social presence</p>
-        </div>
-        
-        <nav className="px-3 space-y-1 flex-1">
-          {allNavItems.map(item => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          return <Link key={item.path} to={item.path} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200", isActive ? "bg-sidebar-accent text-sidebar-primary font-medium shadow-glow" : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}>
-                <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
-              </Link>;
-        })}
-          
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground w-full text-left"
-          >
-            <LogOut className="h-5 w-5" />
-            <span>Logout</span>
-          </button>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {/* Top Navbar */}
-        <div className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Logged in as:</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{userEmail}</span>
-              {userRole && (
-                <span className={cn(
-                  "text-xs px-2 py-1 rounded-full font-medium",
-                  userRole === 'superadmin' && "bg-destructive/10 text-destructive border border-destructive/20",
-                  userRole === 'admin' && "bg-warning/10 text-warning border border-warning/20",
-                  userRole === 'moderator' && "bg-blue-500/10 text-blue-600 border border-blue-500/20",
-                  userRole === 'user' && "bg-muted text-muted-foreground border border-border"
-                )}>
-                  {userRole}
-                </span>
-              )}
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <Sidebar collapsible="icon">
+          <SidebarContent>
+            <div className="p-6">
+              <h1 className="text-2xl font-bold text-slate-50 sidebar-group-content:hidden">
+                Zidna Social Hub
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1 sidebar-group-content:hidden">
+                Manage your social presence
+              </p>
             </div>
+            
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {allNavItems.map(item => {
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.path}>
+                            <Icon className="h-5 w-5" />
+                            <span>{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                  
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={handleLogout}>
+                      <LogOut className="h-5 w-5" />
+                      <span>Logout</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">
+          {/* Top Navbar */}
+          <div className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger />
+              <span className="text-sm text-muted-foreground">Logged in as:</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{userEmail}</span>
+                {userRole && (
+                  <span className={cn(
+                    "text-xs px-2 py-1 rounded-full font-medium",
+                    userRole === 'superadmin' && "bg-destructive/10 text-destructive border border-destructive/20",
+                    userRole === 'admin' && "bg-warning/10 text-warning border border-warning/20",
+                    userRole === 'moderator' && "bg-blue-500/10 text-blue-600 border border-blue-500/20",
+                    userRole === 'user' && "bg-muted text-muted-foreground border border-border"
+                  )}>
+                    {userRole}
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Avatar className="cursor-pointer">
+                  <AvatarFallback className="bg-gradient-primary text-white">
+                    {userEmail.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col gap-1">
+                    <span>{userEmail}</span>
+                    <span className="text-xs font-normal text-muted-foreground capitalize">
+                      Role: {userRole}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Avatar className="cursor-pointer">
-                <AvatarFallback className="bg-gradient-primary text-white">
-                  {userEmail.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
-                </AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col gap-1">
-                  <span>{userEmail}</span>
-                  <span className="text-xs font-normal text-muted-foreground capitalize">
-                    Role: {userRole}
-                  </span>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        
-        <div className="p-8">
-          {children}
-        </div>
-      </main>
-    </div>;
+          <div className="p-8">
+            {children}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
+  );
 };
 export default Layout;

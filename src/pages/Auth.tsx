@@ -14,10 +14,24 @@ const authSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters").max(100)
 });
 
+const signupSchema = authSchema.extend({
+  fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
+  phoneNumber: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
+  dateOfBirth: z.string().refine((date) => {
+    const birthDate = new Date(date);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    return age >= 13 && age <= 120;
+  }, "You must be at least 13 years old")
+});
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -78,7 +92,11 @@ const Auth = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validation = authSchema.safeParse({ email, password });
+    // Validate based on login or signup
+    const validation = isLogin 
+      ? authSchema.safeParse({ email, password })
+      : signupSchema.safeParse({ email, password, fullName, phoneNumber, dateOfBirth });
+    
     if (!validation.success) {
       toast.error(validation.error.errors[0].message);
       return;
@@ -104,11 +122,17 @@ const Auth = () => {
           navigate("/");
         }
       } else {
+        const signupData = validation.data as z.infer<typeof signupSchema>;
         const { data, error } = await supabase.auth.signUp({
-          email: validation.data.email,
-          password: validation.data.password,
+          email: signupData.email,
+          password: signupData.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth`
+            emailRedirectTo: `${window.location.origin}/auth`,
+            data: {
+              full_name: signupData.fullName,
+              phone_number: signupData.phoneNumber,
+              date_of_birth: signupData.dateOfBirth
+            }
           }
         });
 
@@ -195,6 +219,47 @@ const Auth = () => {
               maxLength={255}
             />
           </div>
+
+          {!isLogin && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  maxLength={100}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  placeholder="+1234567890"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  required
+                  max={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
