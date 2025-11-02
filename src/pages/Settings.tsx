@@ -103,17 +103,22 @@ const Settings = () => {
   };
 
   const handleFacebookLogin = async () => {
+    console.log('Facebook Connect button clicked');
+    
     if (!window.FB) {
+      console.error('Facebook SDK not loaded');
       toast.error("Facebook SDK not loaded yet. Please refresh the page.");
       return;
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('User not authenticated');
       toast.error("Not authenticated");
       return;
     }
 
+    console.log('Starting Facebook login...');
     setLoading(true);
     window.FB.login(async (response: any) => {
       console.log('Facebook login response:', response);
@@ -181,17 +186,22 @@ const Settings = () => {
   };
 
   const handleInstagramLogin = async () => {
+    console.log('Instagram Connect button clicked');
+    
     if (!window.FB) {
+      console.error('Facebook SDK not loaded');
       toast.error("Facebook SDK not loaded yet. Please refresh the page.");
       return;
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('User not authenticated');
       toast.error("Not authenticated");
       return;
     }
 
+    console.log('Starting Instagram login...');
     setLoading(true);
     window.FB.login(async (response: any) => {
       console.log('Instagram login response:', response);
