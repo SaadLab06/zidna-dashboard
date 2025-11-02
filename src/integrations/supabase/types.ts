@@ -181,6 +181,80 @@ export type Database = {
         }
         Relationships: []
       }
+      facebook_pages: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          id: string
+          instagram_business_account_id: string | null
+          is_connected: boolean | null
+          page_id: string
+          page_name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          id?: string
+          instagram_business_account_id?: string | null
+          is_connected?: boolean | null
+          page_id: string
+          page_name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          id?: string
+          instagram_business_account_id?: string | null
+          is_connected?: boolean | null
+          page_id?: string
+          page_name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      instagram_accounts: {
+        Row: {
+          created_at: string | null
+          facebook_page_id: string | null
+          id: string
+          instagram_account_id: string
+          is_connected: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          facebook_page_id?: string | null
+          id?: string
+          instagram_account_id: string
+          is_connected?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          facebook_page_id?: string | null
+          id?: string
+          instagram_account_id?: string
+          is_connected?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_accounts_facebook_page_id_fkey"
+            columns: ["facebook_page_id"]
+            isOneToOne: false
+            referencedRelation: "facebook_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instagram_dm_chat_history: {
         Row: {
           id: number
@@ -312,6 +386,39 @@ export type Database = {
           ig_page_token?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      social_media_accounts: {
+        Row: {
+          account_id: string
+          account_name: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          platform: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          account_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          platform: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          account_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          platform?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
