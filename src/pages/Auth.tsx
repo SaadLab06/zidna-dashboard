@@ -63,15 +63,47 @@ const Auth = () => {
             }
           }
 
-          // Defer logging user activity to avoid deadlocks in the auth callback
+          // Defer logging user activity and saving OAuth tokens to avoid deadlocks
           setTimeout(() => {
             (async () => {
+              const provider = (session.user as any)?.app_metadata?.provider || 'email';
+              
+              // Log user activity
               const { error: uaError } = await supabase.from('user_activity').insert({
                 user_id: session.user!.id,
                 event: 'signed_in',
-                meta: { method: (session.user as any)?.app_metadata?.provider || 'email' }
+                meta: { method: provider }
               });
               if (uaError) console.error('user_activity insert error', uaError);
+
+              // Save OAuth tokens if provider is not email
+              if (provider !== 'email' && session.provider_token) {
+                console.log('Saving OAuth token for provider:', provider);
+                
+                const tokenData = {
+                  user_id: session.user!.id,
+                  provider: provider,
+                  access_token: session.provider_token,
+                  refresh_token: session.provider_refresh_token || null,
+                  expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
+                  token_type: 'Bearer',
+                  scope: null
+                };
+
+                // Upsert to handle both new and existing tokens
+                const { error: tokenError } = await supabase
+                  .from('user_oauth_tokens')
+                  .upsert(tokenData, { 
+                    onConflict: 'user_id,provider',
+                    ignoreDuplicates: false 
+                  });
+
+                if (tokenError) {
+                  console.error('Failed to save OAuth token:', tokenError);
+                } else {
+                  console.log('OAuth token saved successfully');
+                }
+              }
             })();
           }, 0);
           
