@@ -574,6 +574,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_superadmin_by_email: {
+        Args: { user_email: string }
+        Returns: undefined
+      }
       has_role:
         | {
             Args: {
