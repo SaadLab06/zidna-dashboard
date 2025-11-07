@@ -5,7 +5,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bell, Link2, User, Lock } from "lucide-react";
+import { Bell, Link2, User, Lock, FileText, Shield } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -604,12 +605,41 @@ const Settings = () => {
                 <span className="text-muted-foreground">Database Status</span>
                 <Badge className="bg-success">Connected</Badge>
               </div>
-              <div className="flex justify-between py-2">
+              <div className="flex justify-between py-2 border-b border-border">
                 <span className="text-muted-foreground">Support</span>
-                <a href="mailto:support@example.com" className="text-primary hover:underline">
+                <a href="mailto:hello@zidnadigital.com" className="text-primary hover:underline">
                   Contact Support
                 </a>
               </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 border-0 shadow-lg">
+            <h3 className="text-lg font-semibold mb-6">Legal Documents</h3>
+            <div className="space-y-4">
+              <Link to="/privacy-policy" className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Privacy Policy</p>
+                    <p className="text-sm text-muted-foreground">Learn how we protect your data</p>
+                  </div>
+                </div>
+              </Link>
+              
+              <Link to="/terms-of-service" className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Terms of Service</p>
+                    <p className="text-sm text-muted-foreground">Review our terms and conditions</p>
+                  </div>
+                </div>
+              </Link>
             </div>
           </Card>
         </TabsContent>
