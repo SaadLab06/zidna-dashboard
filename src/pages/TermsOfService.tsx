@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const DEFAULT_CONTENT = `# Terms of Service
 
@@ -229,11 +231,11 @@ const TermsOfService = () => {
             </div>
 
             {/* Rendered Content */}
-            <div className="prose prose-neutral dark:prose-invert max-w-none">
-              <div className="whitespace-pre-wrap text-base leading-relaxed">
-                {content}
-              </div>
-            </div>
+<div className="prose prose-neutral dark:prose-invert max-w-none">
+  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+    {content}
+  </ReactMarkdown>
+</div>
           </>
         )}
       </div>
