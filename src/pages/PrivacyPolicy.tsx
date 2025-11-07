@@ -52,11 +52,13 @@ const PrivacyPolicy = () => {
   const [content, setContent] = useState(DEFAULT_CONTENT);
   const [editedContent, setEditedContent] = useState("");
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const canEdit = isAdmin || isSuperAdmin;
+  const canEdit = isAdmin || isSuperAdmin || userEmail === "saadlabri123@gmail.com";
 
   useEffect(() => {
     loadContent();
+    supabase.auth.getUser().then(({ data: { user } }) => setUserEmail(user?.email ?? null));
   }, []);
 
   const loadContent = async () => {
