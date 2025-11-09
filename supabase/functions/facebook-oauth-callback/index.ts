@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     console.log('Exchanging code for access token...')
     
     // Exchange code for user access token
-    const tokenUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent('https://zidna-sociahub.lovable.app/settings')}&client_secret=${FACEBOOK_APP_SECRET}&code=${code}`
+    const tokenUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent('https://zidna-sociahub.lovable.app/')}&client_secret=${FACEBOOK_APP_SECRET}&code=${code}`
     
     const tokenResponse = await fetch(tokenUrl)
     const tokenData = await tokenResponse.json()
