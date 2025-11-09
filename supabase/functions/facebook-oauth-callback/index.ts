@@ -70,17 +70,7 @@ Deno.serve(async (req) => {
     const pagesData: FacebookPageResponse = await pagesResponse.json()
 
     if (!pagesData.data || pagesData.data.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'No Facebook pages found',
-          results: []
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
+      throw new Error('No Facebook pages found')
     }
 
     console.log(`Found ${pagesData.data.length} Facebook pages`)
@@ -141,7 +131,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            subscribed_fields: 'messages,feed',
+            subscribed_fields: 'messages,feed,comments',
             access_token: longLivedToken
           })
         })
@@ -206,7 +196,7 @@ Deno.serve(async (req) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              subscribed_fields: 'messages',
+              subscribed_fields: 'messages,comments',
               access_token: longLivedToken
             })
           })
