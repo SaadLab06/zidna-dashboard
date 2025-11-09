@@ -184,6 +184,7 @@ export type Database = {
       facebook_pages: {
         Row: {
           access_token: string
+          category: string | null
           created_at: string | null
           id: string
           instagram_business_account_id: string | null
@@ -195,6 +196,7 @@ export type Database = {
         }
         Insert: {
           access_token: string
+          category?: string | null
           created_at?: string | null
           id?: string
           instagram_business_account_id?: string | null
@@ -206,6 +208,7 @@ export type Database = {
         }
         Update: {
           access_token?: string
+          category?: string | null
           created_at?: string | null
           id?: string
           instagram_business_account_id?: string | null
@@ -219,31 +222,40 @@ export type Database = {
       }
       instagram_accounts: {
         Row: {
+          access_token: string | null
           created_at: string | null
           facebook_page_id: string | null
           id: string
           instagram_account_id: string
           is_connected: boolean | null
+          page_id: string | null
           updated_at: string | null
           user_id: string
+          username: string | null
         }
         Insert: {
+          access_token?: string | null
           created_at?: string | null
           facebook_page_id?: string | null
           id?: string
           instagram_account_id: string
           is_connected?: boolean | null
+          page_id?: string | null
           updated_at?: string | null
           user_id: string
+          username?: string | null
         }
         Update: {
+          access_token?: string | null
           created_at?: string | null
           facebook_page_id?: string | null
           id?: string
           instagram_account_id?: string
           is_connected?: boolean | null
+          page_id?: string | null
           updated_at?: string | null
           user_id?: string
+          username?: string | null
         }
         Relationships: [
           {

@@ -10,7 +10,13 @@ interface FacebookPageResponse {
     id: string
     name: string
     access_token: string
+    category?: string
   }>
+}
+
+interface InstagramDetailsResponse {
+  id: string
+  username: string
 }
 
 interface InstagramAccountResponse {
@@ -59,7 +65,7 @@ Deno.serve(async (req) => {
     console.log('Got user access token')
 
     // Get all user's Facebook Pages
-    const pagesUrl = `https://graph.facebook.com/v21.0/me/accounts?access_token=${userAccessToken}`
+    const pagesUrl = `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,category&access_token=${userAccessToken}`
     const pagesResponse = await fetch(pagesUrl)
     const pagesData: FacebookPageResponse = await pagesResponse.json()
 
@@ -95,7 +101,7 @@ Deno.serve(async (req) => {
 
       const instagramAccountId = igCheckData.instagram_business_account?.id
 
-      // Save Facebook page to database
+      // Save Facebook page to database (store category and page long-lived token)
       const { error: fbError } = await supabase
         .from('facebook_pages')
         .upsert({
@@ -105,6 +111,7 @@ Deno.serve(async (req) => {
           access_token: longLivedToken,
           instagram_business_account_id: instagramAccountId || null,
           is_connected: true,
+          category: (page as any).category || null,
         }, {
           onConflict: 'user_id,page_id'
         })
@@ -124,7 +131,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            subscribed_fields: 'messages,feed',
+            subscribed_fields: 'messages,feed,comments',
             access_token: longLivedToken
           })
         })
@@ -147,13 +154,28 @@ Deno.serve(async (req) => {
           .eq('page_id', pageId)
           .single()
 
-        // Save Instagram account
+        // Fetch Instagram account details (id, username)
+        let igUsername: string | null = null
+        try {
+          const igDetailsUrl = `https://graph.facebook.com/v21.0/${instagramAccountId}?fields=id,username&access_token=${longLivedToken}`
+          const igDetailsResponse = await fetch(igDetailsUrl)
+          const igDetailsData: InstagramDetailsResponse = await igDetailsResponse.json()
+          igUsername = igDetailsData?.username || null
+          console.log(`Fetched Instagram details for ${instagramAccountId}:`, igDetailsData)
+        } catch (err) {
+          console.error(`Failed to fetch Instagram details for ${instagramAccountId}:`, err)
+        }
+
+        // Save Instagram account with username and page token
         const { error: igError } = await supabase
           .from('instagram_accounts')
           .upsert({
             user_id: userId,
             facebook_page_id: fbPage?.id,
             instagram_account_id: instagramAccountId,
+            username: igUsername,
+            access_token: longLivedToken,
+            page_id: pageId,
             is_connected: true,
           }, {
             onConflict: 'user_id,instagram_account_id'
