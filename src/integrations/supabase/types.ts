@@ -189,6 +189,7 @@ export type Database = {
           id: string
           instagram_business_account_id: string | null
           is_connected: boolean | null
+          owner_id: string
           page_id: string
           page_name: string | null
           updated_at: string | null
@@ -201,6 +202,7 @@ export type Database = {
           id?: string
           instagram_business_account_id?: string | null
           is_connected?: boolean | null
+          owner_id?: string
           page_id: string
           page_name?: string | null
           updated_at?: string | null
@@ -213,6 +215,7 @@ export type Database = {
           id?: string
           instagram_business_account_id?: string | null
           is_connected?: boolean | null
+          owner_id?: string
           page_id?: string
           page_name?: string | null
           updated_at?: string | null
@@ -228,6 +231,7 @@ export type Database = {
           id: string
           instagram_account_id: string
           is_connected: boolean | null
+          owner_id: string
           page_id: string | null
           updated_at: string | null
           user_id: string
@@ -240,6 +244,7 @@ export type Database = {
           id?: string
           instagram_account_id: string
           is_connected?: boolean | null
+          owner_id?: string
           page_id?: string | null
           updated_at?: string | null
           user_id: string
@@ -252,6 +257,7 @@ export type Database = {
           id?: string
           instagram_account_id?: string
           is_connected?: boolean | null
+          owner_id?: string
           page_id?: string | null
           updated_at?: string | null
           user_id?: string
@@ -365,6 +371,7 @@ export type Database = {
           date_of_birth: string | null
           full_name: string | null
           id: string
+          owner_id: string
           phone_number: string | null
           updated_at: string | null
           user_id: string
@@ -374,6 +381,7 @@ export type Database = {
           date_of_birth?: string | null
           full_name?: string | null
           id?: string
+          owner_id?: string
           phone_number?: string | null
           updated_at?: string | null
           user_id: string
@@ -383,6 +391,7 @@ export type Database = {
           date_of_birth?: string | null
           full_name?: string | null
           id?: string
+          owner_id?: string
           phone_number?: string | null
           updated_at?: string | null
           user_id?: string
