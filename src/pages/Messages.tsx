@@ -428,20 +428,6 @@ const Messages = () => {
                           return;
                         }
 
-                        // Optimistically add message to UI immediately
-                        const optimisticMessage = {
-                          id: `temp-${Date.now()}`,
-                          thread_id: selectedThread.thread_id,
-                          platform: selectedThread.platform,
-                          message: messageText,
-                          direction: 'out',
-                          sender_name: 'Admin',
-                          sender_id: lastIncomingMessage.recipient_id,
-                          recipient_id: lastIncomingMessage.sender_id,
-                          created_at: new Date().toISOString()
-                        };
-                        setMessages(prev => [...prev, optimisticMessage]);
-                        
                         // Get webhook URL for DM reply
                         const { data: webhooks, error: webhookError } = await supabase
                           .from('webhooks_config')
@@ -452,16 +438,18 @@ const Messages = () => {
                         if (webhookError) {
                           console.error('Webhook fetch error:', webhookError);
                           toast.error("Error fetching webhook configuration");
+                          setNewMessage(messageText);
                           return;
                         }
                         
                         if (!webhooks?.endpoint) {
                           toast.error("No webhook configured for sending messages");
+                          setNewMessage(messageText);
                           return;
                         }
                         
                         try {
-                          // First, make the webhook call
+                          // Call the webhook first
                           const { data: { user } } = await supabase.auth.getUser();
                           const webhookResponse = await fetch(webhooks.endpoint, {
                             method: 'POST',
@@ -476,34 +464,39 @@ const Messages = () => {
                             }),
                           });
                           
-                        // Only save to database if webhook call was successful
-                        if (webhookResponse.ok) {
-                          const { data: { user } } = await supabase.auth.getUser();
-                          const { error } = await supabase
-                            .from('messages')
-                            .insert({
-                              thread_id: selectedThread.thread_id,
-                              platform: selectedThread.platform,
-                              message: messageText,
-                              direction: 'out',
-                              sender_name: 'Admin',
-                              sender_id: lastIncomingMessage.recipient_id,
-                              recipient_id: lastIncomingMessage.sender_id,
-                              owner_id: user?.id
-                            });
-                            
-                            if (error) {
-                              toast.error("Failed to save message to database");
-                              console.error('Database insert error:', error);
+                          // Check if webhook returned 200 with the expected message
+                          if (webhookResponse.ok) {
+                            const responseText = await webhookResponse.text();
+                            if (responseText === "Message was sent successfully") {
+                              // Only now add message to database
+                              const { error } = await supabase
+                                .from('messages')
+                                .insert({
+                                  thread_id: selectedThread.thread_id,
+                                  platform: selectedThread.platform,
+                                  message: messageText,
+                                  direction: 'out',
+                                  sender_name: 'Admin',
+                                  sender_id: lastIncomingMessage.recipient_id,
+                                  recipient_id: lastIncomingMessage.sender_id,
+                                  owner_id: user?.id
+                                });
+                              
+                              if (error) {
+                                toast.error("Failed to save message to database");
+                                console.error('Database insert error:', error);
+                              } else {
+                                toast.success("Message sent successfully");
+                                // Refresh threads list to update last message
+                                fetchThreads();
+                              }
                             } else {
-                              // Refresh threads list to update last message
-                              fetchThreads();
+                              toast.error("Webhook returned unexpected response");
+                              setNewMessage(messageText);
                             }
                           } else {
-                            toast.error("Webhook failed - message not saved");
+                            toast.error("Webhook failed - message not sent");
                             setNewMessage(messageText);
-                            // Remove optimistic message on failure
-                            setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
                           }
                         } catch (error) {
                           console.error('Error:', error);
@@ -529,20 +522,6 @@ const Messages = () => {
                         return;
                       }
 
-                      // Optimistically add message to UI immediately
-                      const optimisticMessage = {
-                        id: `temp-${Date.now()}`,
-                        thread_id: selectedThread.thread_id,
-                        platform: selectedThread.platform,
-                        message: messageText,
-                        direction: 'out',
-                        sender_name: 'Admin',
-                        sender_id: lastIncomingMessage.recipient_id,
-                        recipient_id: lastIncomingMessage.sender_id,
-                        created_at: new Date().toISOString()
-                      };
-                      setMessages(prev => [...prev, optimisticMessage]);
-                      
                       // Get webhook URL for DM reply
                       const { data: webhooks, error: webhookError } = await supabase
                         .from('webhooks_config')
@@ -553,16 +532,18 @@ const Messages = () => {
                       if (webhookError) {
                         console.error('Webhook fetch error:', webhookError);
                         toast.error("Error fetching webhook configuration");
+                        setNewMessage(messageText);
                         return;
                       }
                       
                       if (!webhooks?.endpoint) {
                         toast.error("No webhook configured for sending messages");
+                        setNewMessage(messageText);
                         return;
                       }
                       
                       try {
-                        // First, make the webhook call
+                        // Call the webhook first
                         const { data: { user } } = await supabase.auth.getUser();
                         const webhookResponse = await fetch(webhooks.endpoint, {
                           method: 'POST',
@@ -577,41 +558,44 @@ const Messages = () => {
                           }),
                         });
                         
-                        // Only save to database if webhook call was successful
+                        // Check if webhook returned 200 with the expected message
                         if (webhookResponse.ok) {
-                          const { data: { user } } = await supabase.auth.getUser();
-                          const { error } = await supabase
-                            .from('messages')
-                            .insert({
-                              thread_id: selectedThread.thread_id,
-                              platform: selectedThread.platform,
-                              message: messageText,
-                              direction: 'out',
-                              sender_name: 'Admin',
-                              sender_id: lastIncomingMessage.recipient_id,
-                              recipient_id: lastIncomingMessage.sender_id,
-                              owner_id: user?.id
-                            });
-                          
-                          if (error) {
-                            toast.error("Failed to save message to database");
-                            console.error('Database insert error:', error);
+                          const responseText = await webhookResponse.text();
+                          if (responseText === "Message was sent successfully") {
+                            // Only now add message to database
+                            const { error } = await supabase
+                              .from('messages')
+                              .insert({
+                                thread_id: selectedThread.thread_id,
+                                platform: selectedThread.platform,
+                                message: messageText,
+                                direction: 'out',
+                                sender_name: 'Admin',
+                                sender_id: lastIncomingMessage.recipient_id,
+                                recipient_id: lastIncomingMessage.sender_id,
+                                owner_id: user?.id
+                              });
+                            
+                            if (error) {
+                              toast.error("Failed to save message to database");
+                              console.error('Database insert error:', error);
+                            } else {
+                              toast.success("Message sent successfully");
+                              // Refresh threads list to update last message
+                              fetchThreads();
+                            }
                           } else {
-                            // Refresh threads list to update last message
-                            fetchThreads();
+                            toast.error("Webhook returned unexpected response");
+                            setNewMessage(messageText);
                           }
                         } else {
-                          toast.error("Webhook failed - message not saved");
+                          toast.error("Webhook failed - message not sent");
                           setNewMessage(messageText);
-                          // Remove optimistic message on failure
-                          setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
                         }
                       } catch (error) {
                         console.error('Error:', error);
                         toast.error("Failed to send message - webhook error");
                         setNewMessage(messageText);
-                        // Remove optimistic message on failure
-                        setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
                       }
                     }}
                   >
