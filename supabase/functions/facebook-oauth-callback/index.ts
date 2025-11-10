@@ -106,6 +106,7 @@ Deno.serve(async (req) => {
         .from('facebook_pages')
         .upsert({
           user_id: userId,
+          owner_id: userId,
           page_id: pageId,
           page_name: pageName,
           access_token: longLivedToken,
@@ -171,6 +172,7 @@ Deno.serve(async (req) => {
           .from('instagram_accounts')
           .upsert({
             user_id: userId,
+            owner_id: userId,
             facebook_page_id: fbPage?.id,
             instagram_account_id: instagramAccountId,
             username: igUsername,
