@@ -80,7 +80,7 @@ const Settings = () => {
       const { data: fbPages } = await supabase
         .from('facebook_pages' as any)
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},owner_id.eq.${user.id}`)
         .eq('is_connected', true);
 
       if (fbPages && fbPages.length > 0) {
@@ -98,7 +98,7 @@ const Settings = () => {
       const { data: igAccounts } = await supabase
         .from('instagram_accounts' as any)
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},owner_id.eq.${user.id}`)
         .eq('is_connected', true);
 
       if (igAccounts && igAccounts.length > 0) {
