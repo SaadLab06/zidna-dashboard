@@ -221,9 +221,6 @@ const Auth = () => {
   const handleFacebookAuth = async () => {
     setLoading(true);
     try {
-      // Clear any existing session first to avoid state conflicts
-      await supabase.auth.signOut({ scope: 'local' });
-      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
@@ -237,7 +234,7 @@ const Auth = () => {
         toast.error(error.message);
         setLoading(false);
       }
-      // Don't set loading to false here - let the redirect happen
+      // Let the redirect happen
     } catch (error) {
       toast.error("An unexpected error occurred");
       setLoading(false);
