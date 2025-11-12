@@ -32,28 +32,27 @@ const Layout = ({
   const { isSuperAdmin, isAdmin, isModerator } = useUserRole();
   
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+    const applyUser = async (user: any) => {
       if (user) {
         setUserEmail(user.email || "");
-        
-        // Get user's role
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
           .single();
-        
-        if (roleData) {
-          setUserRole(roleData.role);
-        }
+        if (roleData) setUserRole(roleData.role);
+      } else {
+        setUserEmail("");
+        setUserRole("user");
       }
     };
-    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      applyUser(session?.user ?? null);
+    });
+
+    supabase.auth.getUser().then(({ data: { user } }) => applyUser(user));
+    return () => subscription.unsubscribe();
   }, []);
   const handleLogout = async () => {
     const {
