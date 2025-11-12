@@ -31,22 +31,39 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { code, userId } = await req.json()
+    const { code } = await req.json()
     
-    if (!code || !userId) {
-      throw new Error('Missing code or userId')
+    if (!code) {
+      throw new Error('Missing code')
     }
 
     const FACEBOOK_APP_ID = Deno.env.get('FACEBOOK_APP_ID')
     const FACEBOOK_APP_SECRET = Deno.env.get('FACEBOOK_APP_SECRET')
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')
 
     if (!FACEBOOK_APP_ID || !FACEBOOK_APP_SECRET) {
       throw new Error('Facebook credentials not configured')
     }
 
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
+      throw new Error('Supabase credentials not configured')
+    }
+
+    // Admin client for DB writes
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+    // Auth-aware client to get the current user id from the JWT
+    const supabaseAuth = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+      global: { headers: { Authorization: req.headers.get('Authorization') || '' } }
+    })
+
+    const { data: authData, error: authError } = await supabaseAuth.auth.getUser()
+    if (authError || !authData?.user) {
+      console.error('Auth getUser error:', authError)
+      throw new Error('Not authenticated')
+    }
+    const userId = authData.user.id
 
     console.log('Exchanging code for access token...')
     
