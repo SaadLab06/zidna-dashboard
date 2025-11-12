@@ -39,11 +39,12 @@ const Settings = () => {
     loadConnectedAccounts();
     loadProfile();
     
-    // Handle OAuth callback
+    // Handle OAuth callback specifically for Facebook Connect flow
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
-    
-    if (code) {
+    const state = urlParams.get('state');
+
+    if (code && state === 'connect_fb') {
       handleOAuthCallback(code);
     }
   }, []);
@@ -120,11 +121,10 @@ const Settings = () => {
 
   const handleConnectSocialMedia = () => {
     const FACEBOOK_APP_ID = '1429675601428085';
-    const redirectUri = encodeURIComponent('https://zidna-sociahub.lovable.app/');
+    const redirectUri = encodeURIComponent('https://zidna-sociahub.lovable.app/settings');
     const scope = 'pages_show_list,pages_read_engagement,pages_manage_metadata,pages_messaging,instagram_basic,instagram_manage_messages,instagram_manage_comments';
-    
-    const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
-    
+    const state = 'connect_fb';
+    const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&state=${state}`;
     window.location.href = authUrl;
   };
 
