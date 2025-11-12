@@ -36,6 +36,18 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check for OAuth errors in URL
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+    const errorDescription = params.get('error_description');
+    
+    if (error) {
+      console.error('OAuth error:', error, errorDescription);
+      toast.error(errorDescription || 'Authentication failed. Please try again.');
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Listen for auth state changes to call webhook after email verification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -209,20 +221,25 @@ const Auth = () => {
   const handleFacebookAuth = async () => {
     setLoading(true);
     try {
+      // Clear any existing session first to avoid state conflicts
+      await supabase.auth.signOut({ scope: 'local' });
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
           redirectTo: `${window.location.origin}/auth`,
-          scopes: 'email,public_profile,pages_show_list'
+          scopes: 'email,public_profile,pages_show_list',
+          skipBrowserRedirect: false
         }
       });
 
       if (error) {
         toast.error(error.message);
+        setLoading(false);
       }
+      // Don't set loading to false here - let the redirect happen
     } catch (error) {
       toast.error("An unexpected error occurred");
-    } finally {
       setLoading(false);
     }
   };
