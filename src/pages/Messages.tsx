@@ -313,7 +313,7 @@ const Messages = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)] min-h-0">
         {/* Conversations List */}
         <Card className="border-0 shadow-lg overflow-hidden h-full min-h-0">
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-border space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -324,8 +324,17 @@ const Messages = () => {
                 maxLength={200}
               />
             </div>
+            <Button
+              onClick={checkForNewMessages}
+              disabled={isCheckingMessages}
+              className="w-full"
+              variant="outline"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Check for New Messages
+            </Button>
           </div>
-          <ScrollArea className="h-[calc(100%-80px)]">
+          <ScrollArea className="h-[calc(100%-140px)]">
             <div className="p-2">
               {threads.length === 0 ? (
                 <div className="text-center py-12">
@@ -403,15 +412,6 @@ const Messages = () => {
                   
                   {/* Refresh and AI Control Toggle */}
                   <div className="flex items-center gap-3">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={checkForNewMessages}
-                      disabled={isCheckingMessages}
-                      title="Check for new messages"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
