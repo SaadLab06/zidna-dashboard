@@ -81,6 +81,12 @@ Deno.serve(async (req) => {
     const userAccessToken = tokenData.access_token
     console.log('Got user access token')
 
+    // Debug: Check what permissions were actually granted
+    const permissionsUrl = `https://graph.facebook.com/v21.0/me/permissions?access_token=${userAccessToken}`
+    const permissionsResponse = await fetch(permissionsUrl)
+    const permissionsData = await permissionsResponse.json()
+    console.log('Granted permissions:', JSON.stringify(permissionsData, null, 2))
+
     // Get all user's Facebook Pages
     const pagesUrl = `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,category&access_token=${userAccessToken}`
     const pagesResponse = await fetch(pagesUrl)
