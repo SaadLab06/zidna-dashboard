@@ -90,7 +90,7 @@ const Comments = () => {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     
     const isSuperAdmin = roleData?.role === 'superadmin';
 

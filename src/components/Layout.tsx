@@ -39,7 +39,7 @@ const Layout = ({
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
         if (roleData) setUserRole(roleData.role);
       } else {
         setUserEmail("");

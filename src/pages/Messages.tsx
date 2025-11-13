@@ -10,6 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { validateSearch } from "@/lib/validation";
 import { toast } from "sonner";
+import { WEBHOOK_URLS, webhookRateLimiter } from "@/lib/webhookConfig";
 
 const Messages = () => {
   const [threads, setThreads] = useState<any[]>([]);
@@ -39,14 +40,8 @@ const Messages = () => {
       })
       .subscribe();
 
-    // Auto-refresh threads every 10 seconds
-    const threadsInterval = setInterval(() => {
-      fetchThreads();
-    }, 10000);
-
     return () => {
       supabase.removeChannel(threadsChannel);
-      clearInterval(threadsInterval);
     };
   }, []);
 
@@ -67,14 +62,8 @@ const Messages = () => {
       })
       .subscribe();
 
-    // Auto-refresh messages every 5 seconds
-    const messagesInterval = setInterval(() => {
-      fetchMessages(selectedThread.thread_id);
-    }, 5000);
-
     return () => {
       supabase.removeChannel(messagesChannel);
-      clearInterval(messagesInterval);
     };
   }, [selectedThread]);
 
@@ -161,6 +150,13 @@ const Messages = () => {
   }, [searchTerm]);
 
   const checkForNewMessages = async () => {
+    // Rate limit check
+    if (!webhookRateLimiter.canCall('check-messages')) {
+      const remaining = Math.ceil(webhookRateLimiter.getRemainingTime('check-messages') / 1000);
+      toast.error(`Please wait ${remaining} seconds before checking again`);
+      return;
+    }
+
     setIsCheckingMessages(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -181,8 +177,8 @@ const Messages = () => {
         return;
       }
 
-      // Make POST request to webhook
-      const response = await fetch('https://n8n.srv1048592.hstgr.cloud/webhook/Get-allmsgs', {
+      // Make POST request to webhook using centralized config
+      const response = await fetch(WEBHOOK_URLS.GET_ALL_MESSAGES, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -200,11 +196,13 @@ const Messages = () => {
           fetchThreads();
         }, 2000);
       } else {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('Webhook error:', errorText);
         toast.error("Failed to check for new messages");
       }
     } catch (error) {
       console.error('Error checking for new messages:', error);
-      toast.error("Error checking for new messages");
+      toast.error(error instanceof Error ? error.message : "Error checking for new messages");
     } finally {
       setIsCheckingMessages(false);
     }
@@ -225,30 +223,10 @@ const Messages = () => {
         setNewMessage(messageText);
         return;
       }
-
-      // Get webhook URL for DM reply
-      const { data: webhooks, error: webhookError } = await supabase
-        .from('webhooks_config')
-        .select('endpoint')
-        .eq('name', 'dm_reply')
-        .maybeSingle();
       
-      if (webhookError) {
-        console.error('Webhook fetch error:', webhookError);
-        toast.error("Error fetching webhook configuration");
-        setNewMessage(messageText);
-        return;
-      }
-      
-      if (!webhooks?.endpoint) {
-        toast.error("No webhook configured for sending messages");
-        setNewMessage(messageText);
-        return;
-      }
-      
-      // Call the webhook first
+      // Call the webhook first using centralized config
       const { data: { user } } = await supabase.auth.getUser();
-      const webhookResponse = await fetch(webhooks.endpoint, {
+      const webhookResponse = await fetch(WEBHOOK_URLS.DM_REPLY, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -291,12 +269,14 @@ const Messages = () => {
           setNewMessage(messageText);
         }
       } else {
+        const errorText = await webhookResponse.text().catch(() => 'Unknown error');
+        console.error('Webhook error:', errorText);
         toast.error("Webhook failed - message not sent");
         setNewMessage(messageText);
       }
     } catch (error) {
       console.error('Error:', error);
-      toast.error("Failed to send message - webhook error");
+      toast.error(error instanceof Error ? error.message : "Failed to send message");
       setNewMessage(messageText);
     } finally {
       setIsSending(false);
