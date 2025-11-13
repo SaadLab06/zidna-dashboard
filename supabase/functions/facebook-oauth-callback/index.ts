@@ -86,8 +86,18 @@ Deno.serve(async (req) => {
     const pagesResponse = await fetch(pagesUrl)
     const pagesData: FacebookPageResponse = await pagesResponse.json()
 
+    console.log('Facebook Pages API Response:', JSON.stringify(pagesData, null, 2))
+    console.log('Response status:', pagesResponse.status)
+
+    // Check if Facebook returned an error
+    if ('error' in pagesData) {
+      console.error('Facebook API Error:', JSON.stringify(pagesData, null, 2))
+      throw new Error(`Facebook API Error: ${(pagesData as any).error.message || 'Unknown error'}`)
+    }
+
     if (!pagesData.data || pagesData.data.length === 0) {
-      throw new Error('No Facebook pages found')
+      console.error('No pages in response. Full response:', JSON.stringify(pagesData, null, 2))
+      throw new Error('No Facebook pages found. Make sure you have at least one Facebook Page and have granted the pages_show_list permission.')
     }
 
     console.log(`Found ${pagesData.data.length} Facebook pages`)
