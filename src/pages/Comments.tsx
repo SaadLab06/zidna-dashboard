@@ -163,25 +163,22 @@ const Comments = () => {
 
   const callWebhook = async (endpoint: string, payload: any) => {
     try {
-      const { data: webhookData } = await supabase
-        .from('webhooks_config')
-        .select('endpoint')
-        .eq('name', endpoint)
-        .single();
+      // Use centralized webhook URL
+      const webhookUrl = 'https://n8n.srv1048592.hstgr.cloud/webhook/comment_reply';
 
-      if (!webhookData?.endpoint) {
+      if (!webhookUrl) {
         toast.error(`Webhook ${endpoint} not configured`);
         return false;
       }
 
       // Validate webhook URL to prevent SSRF attacks
-      const validation = isAllowedWebhookUrl(webhookData.endpoint);
+      const validation = isAllowedWebhookUrl(webhookUrl);
       if (!validation.valid) {
         toast.error(`Webhook security error: ${validation.error}`);
         return false;
       }
 
-      const response = await fetch(webhookData.endpoint, {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -33,7 +33,7 @@ const Documents = () => {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     
     const isSuperAdmin = roleData?.role === 'superadmin';
 
@@ -91,15 +91,11 @@ const Documents = () => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Get the webhook URL from settings
-    const { data: webhookConfig } = await supabase
-      .from('webhooks_config')
-      .select('endpoint')
-      .eq('name', 'upload_file')
-      .single();
-
-    if (!webhookConfig?.endpoint) {
-      toast.error("Please configure the upload webhook in Settings");
+    // Use centralized webhook configuration
+    const uploadWebhook = 'https://n8n.srv1048592.hstgr.cloud/webhook/upload_file';
+    
+    if (!uploadWebhook) {
+      toast.error("Upload webhook not configured");
       return;
     }
 
@@ -114,7 +110,7 @@ const Documents = () => {
       formData.append('size', file.size.toString());
       formData.append('owner_id', user?.id || '');
 
-      const response = await fetch(webhookConfig.endpoint, {
+        const response = await fetch(uploadWebhook, {
         method: 'POST',
         body: formData,
       });
@@ -139,21 +135,17 @@ const Documents = () => {
   };
 
   const handleDelete = async (doc: any) => {
-    // Get the webhook URL from settings
-    const { data: webhookConfig } = await supabase
-      .from('webhooks_config')
-      .select('endpoint')
-      .eq('name', 'delete_file')
-      .single();
-
-    if (!webhookConfig?.endpoint) {
-      toast.error("Please configure the delete webhook in Settings");
+    // Use centralized webhook configuration
+    const deleteWebhook = 'https://n8n.srv1048592.hstgr.cloud/webhook/delete_file';
+    
+    if (!deleteWebhook) {
+      toast.error("Delete webhook not configured");
       return;
     }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const response = await fetch(webhookConfig.endpoint, {
+      const response = await fetch(deleteWebhook, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
