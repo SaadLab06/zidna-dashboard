@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Search, MessageCircle, Send, Bot, RefreshCw } from "lucide-react";
+import { Search, MessageCircle, Send, Bot, RefreshCw, Download } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { validateSearch } from "@/lib/validation";
@@ -18,6 +18,7 @@ const Messages = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isCheckingMessages, setIsCheckingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -158,6 +159,56 @@ const Messages = () => {
     }, 300);
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
+
+  const checkForNewMessages = async () => {
+    setIsCheckingMessages(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("User not authenticated");
+        return;
+      }
+
+      // Get Instagram account ID
+      const { data: instagramAccount, error: igError } = await supabase
+        .from('instagram_accounts')
+        .select('instagram_account_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (igError || !instagramAccount?.instagram_account_id) {
+        toast.error("Instagram account not found");
+        return;
+      }
+
+      // Make POST request to webhook
+      const response = await fetch('https://n8n.srv1048592.hstgr.cloud/webhook/Get-allmsgs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          instagram_account_id: instagramAccount.instagram_account_id
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Checking for new messages...");
+        // Refresh threads after a short delay
+        setTimeout(() => {
+          fetchThreads();
+        }, 2000);
+      } else {
+        toast.error("Failed to check for new messages");
+      }
+    } catch (error) {
+      console.error('Error checking for new messages:', error);
+      toast.error("Error checking for new messages");
+    } finally {
+      setIsCheckingMessages(false);
+    }
+  };
 
   const sendMessage = async () => {
     if (!newMessage.trim() || isSending) return;
@@ -352,6 +403,15 @@ const Messages = () => {
                   
                   {/* Refresh and AI Control Toggle */}
                   <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={checkForNewMessages}
+                      disabled={isCheckingMessages}
+                      title="Check for new messages"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
