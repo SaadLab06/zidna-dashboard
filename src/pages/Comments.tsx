@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Search, RefreshCw, MessageSquare, Send, Edit, Trash2 } from "lucide-react";
 import { isAllowedWebhookUrl } from "@/lib/webhookValidation";
-import { WEBHOOK_URLS } from "@/lib/webhookConfig";
 import { formatDistanceToNow } from "date-fns";
 import {
   Select,
@@ -61,9 +60,11 @@ const Comments = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentComment, setCurrentComment] = useState<any>(null);
   const [replyText, setReplyText] = useState("");
+  const [webhooks, setWebhooks] = useState<Record<string, string>>({});
   const { isAdmin, isModerator } = useUserRole();
 
   useEffect(() => {
+    fetchWebhooks();
     fetchComments();
 
     const channel = supabase
@@ -77,6 +78,29 @@ const Comments = () => {
       supabase.removeChannel(channel);
     };
   }, [platformFilter, statusFilter, searchTerm]);
+
+  const fetchWebhooks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('webhooks_config')
+        .select('name, endpoint');
+      
+      if (error) throw error;
+      
+      if (data) {
+        const webhookMap: Record<string, string> = {};
+        data.forEach(webhook => {
+          if (webhook.name && webhook.endpoint) {
+            webhookMap[webhook.name] = webhook.endpoint;
+          }
+        });
+        setWebhooks(webhookMap);
+      }
+    } catch (error) {
+      console.error('Error fetching webhooks:', error);
+      toast.error('Failed to load webhook configuration');
+    }
+  };
 
   const fetchComments = async () => {
     setLoading(true);
@@ -164,13 +188,11 @@ const Comments = () => {
 
   const callWebhook = async (endpoint: string, payload: any) => {
     try {
-      // Use centralized webhook URL based on endpoint
-      const webhookUrl = endpoint === 'delete_comment' 
-        ? WEBHOOK_URLS.DELETE_COMMENT 
-        : WEBHOOK_URLS.COMMENT_REPLY;
+      // Use webhook URL from database
+      const webhookUrl = webhooks[endpoint];
 
       if (!webhookUrl) {
-        toast.error(`Webhook ${endpoint} not configured`);
+        toast.error(`Webhook ${endpoint} not configured in database`);
         return false;
       }
 
