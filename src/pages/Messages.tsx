@@ -249,7 +249,8 @@ const Messages = () => {
           recipient_id: lastIncomingMessage.recipient_id,
           sender_id: lastIncomingMessage.sender_id,
           ai_dm_reply: messageText,
-          owner_id: user?.id
+          owner_id: user?.id,
+          platform: selectedThread.platform
         }),
       });
       
