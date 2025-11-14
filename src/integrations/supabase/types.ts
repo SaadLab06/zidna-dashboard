@@ -324,6 +324,7 @@ export type Database = {
           message: string | null
           owner_id: string | null
           platform: string
+          platform_message_id: string | null
           recipient_id: string | null
           sender_id: string | null
           sender_name: string | null
@@ -337,6 +338,7 @@ export type Database = {
           message?: string | null
           owner_id?: string | null
           platform: string
+          platform_message_id?: string | null
           recipient_id?: string | null
           sender_id?: string | null
           sender_name?: string | null
@@ -350,6 +352,7 @@ export type Database = {
           message?: string | null
           owner_id?: string | null
           platform?: string
+          platform_message_id?: string | null
           recipient_id?: string | null
           sender_id?: string | null
           sender_name?: string | null
