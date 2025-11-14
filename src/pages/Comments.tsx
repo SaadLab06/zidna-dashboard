@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Search, RefreshCw, MessageSquare, Send, Edit, Trash2 } from "lucide-react";
 import { isAllowedWebhookUrl } from "@/lib/webhookValidation";
+import { WEBHOOK_URLS } from "@/lib/webhookConfig";
 import { formatDistanceToNow } from "date-fns";
 import {
   Select,
@@ -163,8 +164,10 @@ const Comments = () => {
 
   const callWebhook = async (endpoint: string, payload: any) => {
     try {
-      // Use centralized webhook URL
-      const webhookUrl = 'https://n8n.srv1048592.hstgr.cloud/webhook/comment_reply';
+      // Use centralized webhook URL based on endpoint
+      const webhookUrl = endpoint === 'delete_comment' 
+        ? WEBHOOK_URLS.DELETE_COMMENT 
+        : WEBHOOK_URLS.COMMENT_REPLY;
 
       if (!webhookUrl) {
         toast.error(`Webhook ${endpoint} not configured`);
