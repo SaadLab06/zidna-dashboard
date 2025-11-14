@@ -20,6 +20,7 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isCheckingMessages, setIsCheckingMessages] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -148,6 +149,19 @@ const Messages = () => {
     }, 300);
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
+
+  const handleRefreshThreads = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchThreads();
+      toast.success("Conversations refreshed");
+    } catch (error) {
+      console.error('Error refreshing threads:', error);
+      toast.error("Failed to refresh conversations");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const checkForNewMessages = async () => {
     // Rate limit check
@@ -304,15 +318,26 @@ const Messages = () => {
                 maxLength={200}
               />
             </div>
-            <Button
-              onClick={checkForNewMessages}
-              disabled={isCheckingMessages}
-              className="w-full"
-              variant="outline"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Check for New Messages
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleRefreshThreads}
+                disabled={isRefreshing}
+                className="flex-1"
+                variant="outline"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button
+                onClick={checkForNewMessages}
+                disabled={isCheckingMessages}
+                className="flex-1"
+                variant="outline"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Check New
+              </Button>
+            </div>
           </div>
           <ScrollArea className="h-[calc(100%-140px)]">
             <div className="p-2">
