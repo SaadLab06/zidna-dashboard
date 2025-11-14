@@ -7,6 +7,7 @@ export const WEBHOOK_URLS = {
   DM_REPLY: 'https://n8n.srv1048592.hstgr.cloud/webhook/dm_reply',
   GET_ALL_MESSAGES: 'https://n8n.srv1048592.hstgr.cloud/webhook/Get-allmsgs',
   COMMENT_REPLY: 'https://n8n.srv1048592.hstgr.cloud/webhook/comment_reply',
+  DELETE_COMMENT: 'https://n8n.srv1048592.hstgr.cloud/webhook/delete_comment',
 } as const;
 
 /**
