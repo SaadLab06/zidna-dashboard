@@ -240,18 +240,23 @@ const Messages = () => {
       
       // Call the webhook first using centralized config
       const { data: { user } } = await supabase.auth.getUser();
+      
+      const payload = {
+        recipient_id: lastIncomingMessage.recipient_id,
+        sender_id: lastIncomingMessage.sender_id,
+        ai_dm_reply: messageText,
+        owner_id: user?.id,
+        platform: selectedThread.platform
+      };
+      
+      console.log('Sending DM webhook payload:', payload);
+      
       const webhookResponse = await fetch(WEBHOOK_URLS.DM_REPLY, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          recipient_id: lastIncomingMessage.recipient_id,
-          sender_id: lastIncomingMessage.sender_id,
-          ai_dm_reply: messageText,
-          owner_id: user?.id,
-          platform: selectedThread.platform
-        }),
+        body: JSON.stringify(payload),
       });
       
       // Check if webhook returned 200 with the expected message
