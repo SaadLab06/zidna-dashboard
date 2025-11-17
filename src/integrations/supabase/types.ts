@@ -46,7 +46,7 @@ export type Database = {
       }
       ai_documents: {
         Row: {
-          description: string | null
+          doc_id: number | null
           file_type: string | null
           file_url: string | null
           id: string
@@ -58,7 +58,7 @@ export type Database = {
           uploaded_at: string | null
         }
         Insert: {
-          description?: string | null
+          doc_id?: number | null
           file_type?: string | null
           file_url?: string | null
           id?: string
@@ -70,7 +70,7 @@ export type Database = {
           uploaded_at?: string | null
         }
         Update: {
-          description?: string | null
+          doc_id?: number | null
           file_type?: string | null
           file_url?: string | null
           id?: string

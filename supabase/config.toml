@@ -1,1 +1,7 @@
 project_id = "hcbpypaasoibqnhbxkqs"
+
+[functions.custom-jwt-auth-login]
+verify_jwt = false
+
+[functions.custom-jwt-auth-refresh]
+verify_jwt = false
