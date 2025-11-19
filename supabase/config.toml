@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.custom-jwt-auth-refresh]
 verify_jwt = false
+
+[functions.custom-jwt-auth-logout]
+verify_jwt = false

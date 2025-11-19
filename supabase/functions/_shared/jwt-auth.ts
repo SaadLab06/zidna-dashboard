@@ -18,8 +18,29 @@ export const corsHeaders = (origin: string) => ({
   'Access-Control-Allow-Origin': origin,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json'
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Credentials': 'true'
 });
+
+// Hash refresh tokens using SubtleCrypto
+export async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(token);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// Parse cookies from cookie header string
+export function parseCookies(cookieHeader: string = ""): Record<string, string> {
+  return Object.fromEntries(
+    cookieHeader.split(";").map(c => {
+      const [key, ...v] = c.trim().split("=");
+      return [key, decodeURIComponent(v.join("="))];
+    })
+  );
+}
 
 // Create a JWT token for the user
 export async function createToken(payload: Record<string, any>, type: 'access' | 'refresh'): Promise<string> {
@@ -48,13 +69,19 @@ export async function verifyToken(token: string, type: 'access' | 'refresh') {
 }
 
 // Store the refresh token in the user_oauth_tokens table
-export async function storeRefreshToken(userId: string, provider: string, token: string, email?: string) {
-  const { error } = await supabase.from('user_oauth_tokens').insert({
+export async function storeRefreshToken(userId: string, provider: string, accessToken: string, refreshToken: string) {
+  const hashedRefreshToken = await hashToken(refreshToken);
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30);
+  
+  const { error } = await supabase.from('user_oauth_tokens').upsert({
     user_id: userId,
     provider,
-    refresh_token: token,
-    access_token: token, // Using same token for both in this implementation
-    created_at: new Date().toISOString()
+    access_token: accessToken,
+    refresh_token: hashedRefreshToken,
+    expires_at: expiresAt.toISOString()
+  }, {
+    onConflict: 'user_id,provider'
   });
   
   if (error) {
