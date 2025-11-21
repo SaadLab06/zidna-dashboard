@@ -376,6 +376,7 @@ export type Database = {
           id: string
           owner_id: string
           phone_number: string | null
+          photo_url: string | null
           updated_at: string | null
           user_id: string
         }
@@ -386,6 +387,7 @@ export type Database = {
           id?: string
           owner_id?: string
           phone_number?: string | null
+          photo_url?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -396,6 +398,7 @@ export type Database = {
           id?: string
           owner_id?: string
           phone_number?: string | null
+          photo_url?: string | null
           updated_at?: string | null
           user_id?: string
         }
