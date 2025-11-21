@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Helmet } from "react-helmet-async";
 
 const DEFAULT_CONTENT = `# Terms of Service
 
@@ -81,9 +82,20 @@ const TermsOfService = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card/80 sticky top-0 z-10 backdrop-blur-sm">
+    <>
+      <Helmet>
+        <title>Terms of Service - Zidna Social Hub</title>
+        <meta name="description" content="Terms of Service for Zidna Social Hub. Review our terms and conditions in accordance with Algerian law." />
+        <meta property="og:title" content="Terms of Service - Zidna Social Hub" />
+        <meta property="og:description" content="Terms of Service for Zidna Social Hub in compliance with Algerian law" />
+        <meta property="og:url" content="https://zidna-sociahub.lovable.app/terms-of-service" />
+        <meta property="og:type" content="website" />
+        <meta property="fb:app_id" content="1429675601428085" />
+        <link rel="canonical" href="https://zidna-sociahub.lovable.app/terms-of-service" />
+      </Helmet>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="border-b border-border bg-card/80 sticky top-0 z-10 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4">
           <Button
             variant="ghost"
@@ -122,6 +134,7 @@ const TermsOfService = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
