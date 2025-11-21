@@ -482,6 +482,7 @@ export type Database = {
           last_message_time: string | null
           owner_id: string | null
           platform: string
+          profile_picture_url: string | null
           thread_id: string | null
           unread_count: number | null
           user_name: string | null
@@ -494,6 +495,7 @@ export type Database = {
           last_message_time?: string | null
           owner_id?: string | null
           platform: string
+          profile_picture_url?: string | null
           thread_id?: string | null
           unread_count?: number | null
           user_name?: string | null
@@ -506,6 +508,7 @@ export type Database = {
           last_message_time?: string | null
           owner_id?: string | null
           platform?: string
+          profile_picture_url?: string | null
           thread_id?: string | null
           unread_count?: number | null
           user_name?: string | null

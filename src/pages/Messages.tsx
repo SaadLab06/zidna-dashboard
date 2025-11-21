@@ -8,9 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { Search, MessageCircle, Send, Bot, RefreshCw, Download } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { validateSearch } from "@/lib/validation";
 import { toast } from "sonner";
 import { WEBHOOK_URLS, webhookRateLimiter } from "@/lib/webhookConfig";
+import { getUserInitials } from "@/lib/userUtils";
 
 const Messages = () => {
   const [threads, setThreads] = useState<any[]>([]);
@@ -364,11 +366,12 @@ const Messages = () => {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-semibold">
-                          {thread.user_name?.[0]?.toUpperCase() || '?'}
-                        </span>
-                      </div>
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarImage src={thread.profile_picture_url} alt={thread.user_name} />
+                        <AvatarFallback className="bg-gradient-primary text-white font-semibold">
+                          {getUserInitials(thread.user_name || 'Unknown')}
+                        </AvatarFallback>
+                      </Avatar>
                        <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <p className="font-medium truncate">{thread.user_name || 'Unknown'}</p>
@@ -408,11 +411,12 @@ const Messages = () => {
               <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center">
-                      <span className="text-white font-semibold">
-                        {selectedThread.user_name?.[0]?.toUpperCase() || '?'}
-                      </span>
-                    </div>
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={selectedThread.profile_picture_url} alt={selectedThread.user_name} />
+                      <AvatarFallback className="bg-gradient-primary text-white font-semibold">
+                        {getUserInitials(selectedThread.user_name || 'Unknown')}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
                       <p className="font-semibold">{selectedThread.user_name}</p>
                       <Badge variant="outline" className="text-xs">
