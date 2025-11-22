@@ -189,6 +189,7 @@ export type Database = {
           id: string
           instagram_business_account_id: string | null
           is_connected: boolean | null
+          is_instagram_connected: boolean | null
           owner_id: string
           page_id: string
           page_name: string | null
@@ -202,6 +203,7 @@ export type Database = {
           id?: string
           instagram_business_account_id?: string | null
           is_connected?: boolean | null
+          is_instagram_connected?: boolean | null
           owner_id?: string
           page_id: string
           page_name?: string | null
@@ -215,6 +217,7 @@ export type Database = {
           id?: string
           instagram_business_account_id?: string | null
           is_connected?: boolean | null
+          is_instagram_connected?: boolean | null
           owner_id?: string
           page_id?: string
           page_name?: string | null
@@ -222,56 +225,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      instagram_accounts: {
-        Row: {
-          access_token: string | null
-          created_at: string | null
-          facebook_page_id: string | null
-          id: string
-          instagram_account_id: string
-          is_connected: boolean | null
-          owner_id: string
-          page_id: string | null
-          updated_at: string | null
-          user_id: string
-          username: string | null
-        }
-        Insert: {
-          access_token?: string | null
-          created_at?: string | null
-          facebook_page_id?: string | null
-          id?: string
-          instagram_account_id: string
-          is_connected?: boolean | null
-          owner_id?: string
-          page_id?: string | null
-          updated_at?: string | null
-          user_id: string
-          username?: string | null
-        }
-        Update: {
-          access_token?: string | null
-          created_at?: string | null
-          facebook_page_id?: string | null
-          id?: string
-          instagram_account_id?: string
-          is_connected?: boolean | null
-          owner_id?: string
-          page_id?: string | null
-          updated_at?: string | null
-          user_id?: string
-          username?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "instagram_accounts_facebook_page_id_fkey"
-            columns: ["facebook_page_id"]
-            isOneToOne: false
-            referencedRelation: "facebook_pages"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       instagram_dm_chat_history: {
         Row: {
@@ -367,42 +320,6 @@ export type Database = {
             referencedColumns: ["thread_id"]
           },
         ]
-      }
-      profiles: {
-        Row: {
-          created_at: string | null
-          date_of_birth: string | null
-          full_name: string | null
-          id: string
-          owner_id: string
-          phone_number: string | null
-          photo_url: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          date_of_birth?: string | null
-          full_name?: string | null
-          id?: string
-          owner_id?: string
-          phone_number?: string | null
-          photo_url?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          date_of_birth?: string | null
-          full_name?: string | null
-          id?: string
-          owner_id?: string
-          phone_number?: string | null
-          photo_url?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
       }
       settings: {
         Row: {
@@ -574,27 +491,6 @@ export type Database = {
           scope?: string | null
           token_type?: string | null
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
