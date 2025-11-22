@@ -181,27 +181,33 @@ const Messages = () => {
         return;
       }
 
-      // Get Instagram account ID
-      const { data: instagramAccount, error: igError } = await supabase
-        .from('instagram_accounts')
-        .select('instagram_account_id')
+      // Get Facebook page with Instagram account info
+      const { data: fbPage, error: fbError } = await supabase
+        .from('facebook_pages')
+        .select('page_id, instagram_business_account_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (igError || !instagramAccount?.instagram_account_id) {
-        toast.error("Instagram account not found");
+      if (fbError || !fbPage) {
+        toast.error("Facebook page not found");
         return;
       }
 
-      // Make POST request to webhook using centralized config
+      if (!fbPage.instagram_business_account_id) {
+        toast.error("Instagram account not connected to Facebook page");
+        return;
+      }
+
+      // Make POST request to webhook with owner_id, instagram_id, and page_id
       const response = await fetch(WEBHOOK_URLS.GET_ALL_MESSAGES, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: user.id,
-          instagram_account_id: instagramAccount.instagram_account_id
+          owner_id: user.id,
+          instagram_id: fbPage.instagram_business_account_id,
+          page_id: fbPage.page_id
         }),
       });
 
