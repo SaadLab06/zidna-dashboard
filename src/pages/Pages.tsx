@@ -170,7 +170,6 @@ const Pages = () => {
                   />
                 </TableHead>
                 <TableHead className="font-semibold">Page Name</TableHead>
-                <TableHead className="font-semibold">Roles</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold pr-6">Approval</TableHead>
               </TableRow>
@@ -178,7 +177,7 @@ const Pages = () => {
             <TableBody>
               {filteredPages.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
                     {searchQuery ? "No pages found matching your search" : "No pages available"}
                   </TableCell>
                 </TableRow>
@@ -201,15 +200,6 @@ const Pages = () => {
                           <Crown className="h-4 w-4 text-yellow-500 flex-shrink-0" />
                         )}
                         <span className="font-medium">{page.pageName}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        {page.roles.map((role) => (
-                          <Badge key={role} variant="secondary" className="text-xs font-normal">
-                            {role}
-                          </Badge>
-                        ))}
                       </div>
                     </TableCell>
                     <TableCell>
