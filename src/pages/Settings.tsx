@@ -54,17 +54,10 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (profile) {
-        setFullName(profile.full_name || "");
-        setPhoneNumber(profile.phone_number || "");
-        setDateOfBirth(profile.date_of_birth || "");
-      }
+      // Get profile info from user metadata
+      setFullName(user.user_metadata?.full_name || "");
+      setPhoneNumber(user.user_metadata?.phone_number || "");
+      setDateOfBirth(user.user_metadata?.date_of_birth || "");
     } catch (error) {
       console.error('Error loading profile:', error);
     }
@@ -213,14 +206,14 @@ const Settings = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
+      // Update user metadata
+      const { error } = await supabase.auth.updateUser({
+        data: {
           full_name: fullName,
           phone_number: phoneNumber,
           date_of_birth: dateOfBirth
-        })
-        .eq('user_id', user.id);
+        }
+      });
 
       if (error) throw error;
 

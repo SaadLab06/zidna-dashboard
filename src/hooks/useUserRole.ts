@@ -9,26 +9,9 @@ export const useUserRole = () => {
     const checkRole = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
-          .from('user_roles' as any)
-          .select('role')
-          .eq('user_id', user.id);
-        
-        // Handle multiple roles - prioritize highest privilege
-        if (data && data.length > 0) {
-          const roles = data.map((r: any) => r.role);
-          if (roles.includes('superadmin')) {
-            setRole('superadmin');
-          } else if (roles.includes('admin')) {
-            setRole('admin');
-          } else if (roles.includes('moderator')) {
-            setRole('moderator');
-          } else {
-            setRole('user');
-          }
-        } else {
-          setRole('user');
-        }
+        // Get role from user metadata
+        const userRole = user.user_metadata?.app_role || 'client';
+        setRole(userRole);
       }
       setLoading(false);
     };
@@ -40,6 +23,6 @@ export const useUserRole = () => {
     loading, 
     isAdmin: role === 'admin', 
     isModerator: role === 'moderator',
-    isSuperAdmin: role === 'superadmin'
+    isSuperAdmin: role === 'super_admin'
   };
 };
