@@ -8,7 +8,8 @@ import { UserManagementTab } from "@/components/superadmin/UserManagementTab";
 import { RoleManagementTab } from "@/components/superadmin/RoleManagementTab";
 import { AuditLogTab } from "@/components/superadmin/AuditLogTab";
 import { AccountsManagementTab } from "@/components/superadmin/AccountsManagementTab";
-import { Shield, Users, ScrollText, UserCog } from "lucide-react";
+import { PagePermissionsTab } from "@/components/superadmin/PagePermissionsTab";
+import { Shield, Users, ScrollText, UserCog, Lock } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -49,7 +50,7 @@ const SuperAdmin = () => {
       </div>
 
       <Tabs defaultValue="accounts" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="accounts">
             <UserCog className="h-4 w-4 mr-2" />
             Accounts
@@ -61,6 +62,10 @@ const SuperAdmin = () => {
           <TabsTrigger value="roles">
             <Shield className="h-4 w-4 mr-2" />
             Role Management
+          </TabsTrigger>
+          <TabsTrigger value="pages">
+            <Lock className="h-4 w-4 mr-2" />
+            Page Permissions
           </TabsTrigger>
           <TabsTrigger value="audit">
             <ScrollText className="h-4 w-4 mr-2" />
@@ -78,6 +83,10 @@ const SuperAdmin = () => {
 
         <TabsContent value="roles">
           <RoleManagementTab />
+        </TabsContent>
+
+        <TabsContent value="pages">
+          <PagePermissionsTab />
         </TabsContent>
 
         <TabsContent value="audit">

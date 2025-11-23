@@ -18,11 +18,25 @@ export const useUserRole = () => {
     checkRole();
   }, []);
 
+  const hasSystemAccess = (feature: 'superadmin' | 'admin' | 'moderator') => {
+    switch (feature) {
+      case 'superadmin':
+        return role === 'super_admin';
+      case 'admin':
+        return role === 'super_admin' || role === 'admin';
+      case 'moderator':
+        return role === 'super_admin' || role === 'admin' || role === 'moderator';
+      default:
+        return false;
+    }
+  };
+
   return { 
     role, 
     loading, 
     isAdmin: role === 'admin', 
     isModerator: role === 'moderator',
-    isSuperAdmin: role === 'super_admin'
+    isSuperAdmin: role === 'super_admin',
+    hasSystemAccess
   };
 };
