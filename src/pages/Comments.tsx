@@ -110,14 +110,8 @@ const Comments = () => {
       return;
     }
 
-    // Check if user is superadmin
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    
-    const isSuperAdmin = roleData?.role === 'superadmin';
+    // Check if user is super_admin from metadata
+    const isSuperAdmin = user.user_metadata?.app_role === 'super_admin';
 
     let query = supabase
       .from('comments' as any)

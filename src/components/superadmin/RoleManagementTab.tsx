@@ -25,14 +25,26 @@ export const RoleManagementTab = () => {
   const loadUserRoles = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Call edge function to list users with their roles from metadata
+      const { data: fnRes, error: fnErr } = await supabase.functions.invoke('admin-list-users', {
+        body: { search: '' },
+      });
 
-      if (error) throw error;
+      if (fnErr) {
+        console.error('admin-list-users failed', fnErr);
+        throw new Error('Failed to load users');
+      }
 
-      setUserRoles(data || []);
+      const { users: usersList } = (fnRes as any) || { users: [] };
+
+      const roles: UserRole[] = (usersList || []).map((u: any) => ({
+        id: u.id,
+        user_id: u.id,
+        role: u.raw_user_meta_data?.app_role || 'client',
+      }));
+
+      setUserRoles(roles);
     } catch (error: any) {
       console.error('Error loading roles:', error);
       toast.error("Failed to load user roles");
@@ -59,26 +71,25 @@ export const RoleManagementTab = () => {
 
   const updateUserRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({ 
-          user_id: userId, 
-          role: newRole as 'user' | 'admin' | 'moderator' | 'superadmin'
-        });
+      // Need an edge function to update user metadata since we can't directly update auth.users
+      const { data, error } = await supabase.functions.invoke('admin-update-user-role', {
+        body: { userId, role: newRole }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       await logAdminAction('role_update', userId, { new_role: newRole });
       toast.success("Role updated successfully");
       loadUserRoles();
     } catch (error: any) {
-      toast.error("Failed to update role");
+      toast.error(error.message || "Failed to update role");
     }
   };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'superadmin': return 'bg-destructive';
+      case 'super_admin': return 'bg-destructive';
       case 'admin': return 'bg-warning';
       case 'moderator': return 'bg-info';
       default: return 'bg-muted';
@@ -128,10 +139,10 @@ export const RoleManagementTab = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="client">Client</SelectItem>
                         <SelectItem value="moderator">Moderator</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="superadmin">Superadmin</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>

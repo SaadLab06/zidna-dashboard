@@ -39,14 +39,7 @@ export const AccountsManagementTab = () => {
     try {
       setLoading(true);
 
-      // Fetch roles for all users
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('user_id, role, created_at');
-
-      const rolesMap = new Map(rolesData?.map((r) => [r.user_id, r.role]) || []);
-
-      // Call edge function (superadmin-only) to get real emails from auth.users
+      // Call edge function to get users with roles from metadata
       const { data: fnRes, error: fnErr } = await supabase.functions.invoke('admin-list-users', {
         body: { search: searchQuery || '' },
       });
@@ -62,7 +55,7 @@ export const AccountsManagementTab = () => {
         id: u.id,
         email: u.email || 'Unknown',
         created_at: u.created_at,
-        role: rolesMap.get(u.id) || 'user',
+        role: u.raw_user_meta_data?.app_role || 'client',
       }));
 
       setAccounts(accountsList);
@@ -107,16 +100,13 @@ export const AccountsManagementTab = () => {
     if (!selectedAccount) return;
     
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: selectedAccount.id,
-          role: newRole as any
-        }, {
-          onConflict: 'user_id,role'
-        });
-      
+      // Call edge function to update user metadata
+      const { data, error } = await supabase.functions.invoke('admin-update-user-role', {
+        body: { userId: selectedAccount.id, role: newRole }
+      });
+
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast.success("User role updated successfully");
       setRoleDialogOpen(false);
@@ -136,7 +126,7 @@ export const AccountsManagementTab = () => {
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'superadmin': return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'super_admin': return 'bg-destructive/10 text-destructive border-destructive/20';
       case 'admin': return 'bg-warning/10 text-warning border-warning/20';
       case 'moderator': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
       default: return 'bg-muted text-muted-foreground border-border';
@@ -287,10 +277,10 @@ export const AccountsManagementTab = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
                   <SelectItem value="moderator">Moderator</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="superadmin">Superadmin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>

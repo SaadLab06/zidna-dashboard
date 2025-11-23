@@ -28,15 +28,25 @@ export const UserManagementTab = () => {
     try {
       setLoading(true);
       
-      // Fetch user roles (this works client-side)
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
+      // Call edge function to list users with their roles from metadata
+      const { data: fnRes, error: fnErr } = await supabase.functions.invoke('admin-list-users', {
+        body: { search: '' },
+      });
 
-      setUsers(data || []);
+      if (fnErr) {
+        console.error('admin-list-users failed', fnErr);
+        throw new Error('Failed to load users');
+      }
+
+      const { users: usersList } = (fnRes as any) || { users: [] };
+
+      const usersWithRoles: UserWithRole[] = (usersList || []).map((u: any) => ({
+        user_id: u.id,
+        role: u.raw_user_meta_data?.app_role || 'client',
+        created_at: u.created_at,
+      }));
+
+      setUsers(usersWithRoles);
     } catch (error: any) {
       console.error('Error loading users:', error);
       toast.error(error.message || "Failed to load users");
@@ -51,7 +61,7 @@ export const UserManagementTab = () => {
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'superadmin': return 'bg-destructive';
+      case 'super_admin': return 'bg-destructive';
       case 'admin': return 'bg-warning';
       case 'moderator': return 'bg-info';
       default: return 'bg-muted';

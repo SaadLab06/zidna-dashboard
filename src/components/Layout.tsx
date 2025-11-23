@@ -35,15 +35,12 @@ const Layout = ({
     const applyUser = async (user: any) => {
       if (user) {
         setUserEmail(user.email || "");
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        if (roleData) setUserRole(roleData.role);
+        // Get role from user metadata
+        const role = user.user_metadata?.app_role || 'client';
+        setUserRole(role);
       } else {
         setUserEmail("");
-        setUserRole("user");
+        setUserRole("client");
       }
     };
 
@@ -87,7 +84,7 @@ const Layout = ({
     path: "/settings"
   }];
 
-  // Add SuperAdmin link if user is superadmin
+  // Add SuperAdmin link if user is super_admin
   const allNavItems = isSuperAdmin 
     ? [...navItems, {
         icon: Shield,
@@ -153,10 +150,10 @@ const Layout = ({
                 {userRole && (
                   <span className={cn(
                     "text-xs px-2 py-1 rounded-full font-medium",
-                    userRole === 'superadmin' && "bg-destructive/10 text-destructive border border-destructive/20",
+                    userRole === 'super_admin' && "bg-destructive/10 text-destructive border border-destructive/20",
                     userRole === 'admin' && "bg-warning/10 text-warning border border-warning/20",
                     userRole === 'moderator' && "bg-blue-500/10 text-blue-600 border border-blue-500/20",
-                    userRole === 'user' && "bg-muted text-muted-foreground border border-border"
+                    userRole === 'client' && "bg-muted text-muted-foreground border border-border"
                   )}>
                     {userRole}
                   </span>
