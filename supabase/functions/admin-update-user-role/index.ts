@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+import { allowedOrigins, corsHeaders } from '../_shared/jwt-auth.ts'
 
 const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -12,13 +13,27 @@ const supabaseAdmin = createClient(
 );
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin') || ''
+  
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders(origin) })
+  }
+
+  // Validate origin
+  if (!allowedOrigins.includes(origin)) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden origin' }),
+      { status: 403, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
+    )
+  }
+
   try {
     // Verify the request is from an authenticated superadmin
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -28,7 +43,7 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -37,7 +52,7 @@ Deno.serve(async (req) => {
     if (userRole !== 'super_admin') {
       return new Response(
         JSON.stringify({ error: 'Forbidden: Only superadmins can update roles' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -46,7 +61,7 @@ Deno.serve(async (req) => {
     if (!userId || !role) {
       return new Response(
         JSON.stringify({ error: 'Missing userId or role' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -55,7 +70,7 @@ Deno.serve(async (req) => {
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({ error: 'Invalid role' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -75,14 +90,14 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, userId, role }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
     console.error('Error updating user role:', error);
     return new Response(
       JSON.stringify({ error: error?.message || 'Unknown error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -1,13 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { allowedOrigins, corsHeaders } from '../_shared/jwt-auth.ts'
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin') || ''
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(origin) })
+  }
+
+  // Validate origin
+  if (!allowedOrigins.includes(origin)) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden origin' }),
+      { status: 403, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
+    )
   }
 
   try {
@@ -26,7 +32,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -36,7 +42,7 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -50,7 +56,7 @@ Deno.serve(async (req) => {
     if (!roleData || roleData.role !== 'superadmin') {
       return new Response(
         JSON.stringify({ error: 'Forbidden: Superadmin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -60,7 +66,7 @@ Deno.serve(async (req) => {
     if (!userId) {
       return new Response(
         JSON.stringify({ error: 'Missing userId in request body' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -73,7 +79,7 @@ Deno.serve(async (req) => {
       console.error('Error deleting user:', deleteError)
       return new Response(
         JSON.stringify({ error: deleteError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -81,7 +87,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, message: 'User deleted successfully' }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
@@ -89,7 +95,7 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
     )
   }
 })
