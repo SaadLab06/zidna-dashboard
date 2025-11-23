@@ -495,6 +495,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_pages_relations: {
+        Row: {
+          approval_status: Database["public"]["Enums"]["approval_status_enum"]
+          created_at: string
+          id: string
+          owner_id: string
+          page_id: string
+          relation_status: Database["public"]["Enums"]["relation_status_enum"]
+          updated_at: string
+          user_id: string
+          user_roles: Database["public"]["Enums"]["page_role_enum"][]
+        }
+        Insert: {
+          approval_status?: Database["public"]["Enums"]["approval_status_enum"]
+          created_at?: string
+          id?: string
+          owner_id: string
+          page_id: string
+          relation_status?: Database["public"]["Enums"]["relation_status_enum"]
+          updated_at?: string
+          user_id: string
+          user_roles?: Database["public"]["Enums"]["page_role_enum"][]
+        }
+        Update: {
+          approval_status?: Database["public"]["Enums"]["approval_status_enum"]
+          created_at?: string
+          id?: string
+          owner_id?: string
+          page_id?: string
+          relation_status?: Database["public"]["Enums"]["relation_status_enum"]
+          updated_at?: string
+          user_id?: string
+          user_roles?: Database["public"]["Enums"]["page_role_enum"][]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_pages_relations_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "facebook_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhooks_config: {
         Row: {
           description: string | null
@@ -528,7 +572,15 @@ export type Database = {
         Args: { user_email: string }
         Returns: undefined
       }
+      has_page_role: {
+        Args: { _page_id: string; _role: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      is_page_owner: {
+        Args: { p_page_id: string; p_user_id: string }
+        Returns: boolean
+      }
       match_documents: {
         Args: { filter?: Json; match_count?: number; query_embedding: string }
         Returns: {
@@ -541,6 +593,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "superadmin"
+      approval_status_enum: "pending" | "accepted" | "rejected"
+      page_role_enum: "admin" | "editor" | "moderator" | "viewer" | "user"
+      relation_status_enum: "pending" | "active" | "banished"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -669,6 +724,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "superadmin"],
+      approval_status_enum: ["pending", "accepted", "rejected"],
+      page_role_enum: ["admin", "editor", "moderator", "viewer", "user"],
+      relation_status_enum: ["pending", "active", "banished"],
     },
   },
 } as const
