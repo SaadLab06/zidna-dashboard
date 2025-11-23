@@ -13,6 +13,8 @@ import Messages from "./pages/Messages";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import SuperAdmin from "./pages/SuperAdmin";
+import Pages from "./pages/Pages";
+import PageManagement from "./pages/PageManagement";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
@@ -54,6 +56,8 @@ const App = () => (
               <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
               <Route path="/comments" element={<ProtectedRoute><Layout><Comments /></Layout></ProtectedRoute>} />
               <Route path="/messages" element={<ProtectedRoute><Layout><Messages /></Layout></ProtectedRoute>} />
+              <Route path="/pages" element={<ProtectedRoute><Layout><Pages /></Layout></ProtectedRoute>} />
+              <Route path="/pages/:pageId" element={<ProtectedRoute><Layout><PageManagement /></Layout></ProtectedRoute>} />
               <Route path="/documents" element={<ProtectedRoute><Layout><Documents /></Layout></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
               <Route path="/superadmin" element={<ProtectedRoute><Layout><SuperAdmin /></Layout></ProtectedRoute>} />

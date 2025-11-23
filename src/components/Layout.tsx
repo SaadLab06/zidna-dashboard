@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, MessageSquare, FileText, Settings, MessageCircle, LogOut, User, Shield } from "lucide-react";
+import { LayoutDashboard, MessageSquare, FileText, Settings, MessageCircle, LogOut, User, Shield, Folders } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -74,6 +74,10 @@ const Layout = ({
     icon: MessageCircle,
     label: "Messages",
     path: "/messages"
+  }, {
+    icon: Folders,
+    label: "My Pages",
+    path: "/pages"
   }, {
     icon: FileText,
     label: "AI Documents",
