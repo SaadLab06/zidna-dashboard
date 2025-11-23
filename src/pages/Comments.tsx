@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Search, RefreshCw, MessageSquare, Send, Edit, Trash2 } from "lucide-react";
 import { isAllowedWebhookUrl } from "@/lib/webhookValidation";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
 import {
   Select,
   SelectContent,
@@ -48,6 +49,7 @@ import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const Comments = () => {
+  const { user, isSuperAdmin } = useAuth();
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -104,14 +106,10 @@ const Comments = () => {
 
   const fetchComments = async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setLoading(false);
       return;
     }
-
-    // Check if user is super_admin from metadata
-    const isSuperAdmin = user.user_metadata?.app_role === 'super_admin';
 
     let query = supabase
       .from('comments' as any)
@@ -220,7 +218,6 @@ const Comments = () => {
     const comment = comments.find(c => c.id === id);
     if (!comment) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('delete_comment', {
       comment_id: comment.comment_id,
       platform: comment.platform,
@@ -241,7 +238,6 @@ const Comments = () => {
     const ids = selectedCommentData.map(c => c.comment_id);
     const platform = selectedCommentData[0]?.platform;
 
-    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('delete_comment', {
       ids,
       platform,
@@ -267,7 +263,6 @@ const Comments = () => {
   const handleConfirmReply = async () => {
     if (!currentComment || !replyText.trim()) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('comment_reply', {
       comment_id: currentComment.comment_id,
       reply_text: replyText,
@@ -298,7 +293,6 @@ const Comments = () => {
   const handleConfirmEdit = async () => {
     if (!currentComment || !replyText.trim()) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('comment_reply', {
       comment_id: currentComment.comment_id,
       reply_text: replyText,
@@ -330,7 +324,6 @@ const Comments = () => {
       reply: comment.ai_reply || ""
     }));
 
-    const { data: { user } } = await supabase.auth.getUser();
     const success = await callWebhook('comment_reply', {
       comments: commentsPayload,
       owner_id: user?.id

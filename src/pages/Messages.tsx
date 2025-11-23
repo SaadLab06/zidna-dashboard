@@ -13,8 +13,10 @@ import { validateSearch } from "@/lib/validation";
 import { toast } from "sonner";
 import { WEBHOOK_URLS, webhookRateLimiter } from "@/lib/webhookConfig";
 import { getUserInitials } from "@/lib/userUtils";
+import { useAuth } from "@/context/AuthContext";
 
 const Messages = () => {
+  const { user, isSuperAdmin } = useAuth();
   const [threads, setThreads] = useState<any[]>([]);
   const [selectedThread, setSelectedThread] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -77,11 +79,7 @@ const Messages = () => {
   }, [selectedThread]);
 
   const fetchThreads = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    // Check if user is super_admin from metadata
-    const isSuperAdmin = user.user_metadata?.app_role === 'super_admin';
 
     let query = supabase
       .from('threads' as any)
@@ -109,11 +107,7 @@ const Messages = () => {
   };
 
   const fetchMessages = async (threadId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    // Check if user is super_admin from metadata
-    const isSuperAdmin = user.user_metadata?.app_role === 'super_admin';
 
     let query = supabase
       .from('messages' as any)
@@ -163,7 +157,6 @@ const Messages = () => {
 
     setIsCheckingMessages(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("User not authenticated");
         return;
@@ -235,8 +228,6 @@ const Messages = () => {
       }
       
       // Call the webhook first using centralized config
-      const { data: { user } } = await supabase.auth.getUser();
-      
       const payload = {
         recipient_id: lastIncomingMessage.recipient_id,
         sender_id: lastIncomingMessage.sender_id,
