@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.1'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { allowedOrigins, corsHeaders } from '../_shared/jwt-auth.ts'
 
 interface FacebookPageResponse {
   data: Array<{
@@ -26,8 +22,18 @@ interface InstagramAccountResponse {
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin') || ''
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders(origin) })
+  }
+
+  // Validate origin
+  if (!allowedOrigins.includes(origin)) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden origin' }),
+      { status: 403, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
+    )
   }
 
   try {
@@ -255,7 +261,7 @@ Deno.serve(async (req) => {
         results 
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
         status: 200 
       }
     )
@@ -268,7 +274,7 @@ Deno.serve(async (req) => {
         details: error.toString()
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
         status: 400 
       }
     )

@@ -1,13 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { allowedOrigins, corsHeaders } from '../_shared/jwt-auth.ts'
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin') || ''
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders(origin) })
+  }
+
+  // Validate origin
+  if (!allowedOrigins.includes(origin)) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden origin' }),
+      { status: 403, headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' } }
+    )
   }
 
   try {
@@ -24,7 +30,7 @@ Deno.serve(async (req) => {
     const jwt = authHeader.replace('Bearer ', '')
     if (!jwt) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
         status: 401,
       })
     }
@@ -32,7 +38,7 @@ Deno.serve(async (req) => {
     const { data: userData, error: userErr } = await adminClient.auth.getUser(jwt)
     if (userErr || !userData?.user) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
         status: 401,
       })
     }
@@ -47,14 +53,14 @@ Deno.serve(async (req) => {
     if (roleErr) {
       console.error('Role check error', roleErr)
       return new Response(JSON.stringify({ error: 'Role check failed' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
         status: 500,
       })
     }
 
     if (roleRow?.role !== 'superadmin') {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
         status: 403,
       })
     }
@@ -69,7 +75,7 @@ Deno.serve(async (req) => {
       if (error) {
         console.error('listUsers error', error)
         return new Response(JSON.stringify({ error: 'Failed to list users' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
           status: 500,
         })
       }
@@ -86,13 +92,13 @@ Deno.serve(async (req) => {
       .filter((u) => (search ? (u.email?.toLowerCase().includes(search) || u.id.toLowerCase().includes(search)) : true))
 
     return new Response(JSON.stringify({ users: simplified }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (e) {
     console.error('Unhandled error', e)
     return new Response(JSON.stringify({ error: 'Internal error' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
       status: 500,
     })
   }
